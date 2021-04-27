@@ -13,8 +13,7 @@ class ball_position_gen(object):
                  ball_noise = 0.1,
                  velocity_to_ball_noise = 0.2,
                  ball_position_interval = (9.0, 6.0),
-                 back_velocity = 1,
-                 seed = 2):
+                 back_velocity = 1):
       
         self._ball_position = np.array(ball_init_position)
         self._velocity = np.array(init_velocity)
@@ -26,9 +25,6 @@ class ball_position_gen(object):
         self._velocity_to_ball_noise = velocity_to_ball_noise
         self._ball_position_interval = ball_position_interval
         self._back_velocity = back_velocity
-        
-        np.random.seed(seed)
-        random.seed(seed)
  
     def __iter__(self):
         return self
