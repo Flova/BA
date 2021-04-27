@@ -103,6 +103,10 @@ class SoccerWorldEnv(gym.Env):
         cv2.line(self.prop_dist, tuple(robot_in_image), tuple(robot_in_image_heading_min_vector), (255,255,255), 2)
         cv2.line(self.prop_dist, tuple(robot_in_image), tuple(robot_in_image_heading_max_vector), (255,255,255), 2)
 
+        corners = (self.camera.get_projected_image_corners() * self.resolution).astype(np.int32)
+        corners = corners.reshape((-1,1,2))
+        cv2.polylines(self.prop_dist,[corners],True,(0,255,255), 5)
+
         cv2.imshow("Dist", self.prop_dist)
         cv2.waitKey(1)
     

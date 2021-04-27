@@ -58,7 +58,6 @@ class Camera:
             p_pixel = p_pixel * (1/p_pixel[2])
             
             if 0 < p_pixel[0] <= self.width and 0 < p_pixel[1] <= self.height:
-                print(self.get_pixel_position_in_world(np.array([p_pixel[0], p_pixel[1], 0])))
                 return True
         return False
 
@@ -113,7 +112,12 @@ class Camera:
         return ray_directions
 
     def get_projected_image_corners(self):
-        pass
+        return np.array([
+            self.get_pixel_position_in_world(np.array([self.width, 0, 1.0]))[:2],
+            self.get_pixel_position_in_world(np.array([self.width, self.height, 1.0]))[:2],
+            self.get_pixel_position_in_world(np.array([0, self.height, 1.0]))[:2],
+            self.get_pixel_position_in_world(np.array([0, 0, 1.0]))[:2],
+        ])
 
 
 if __name__ == '__main__':
