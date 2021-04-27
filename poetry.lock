@@ -460,6 +460,14 @@ numpy = "*"
 typing-extensions = "*"
 
 [[package]]
+name = "transforms3d"
+version = "0.3.1"
+description = "Functions for 3D coordinate transformations"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "typing-extensions"
 version = "3.7.4.3"
 description = "Backported and Experimental Type Hints for Python 3.5+"
@@ -495,7 +503,7 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "6a59c64b4cb2ad3fe6c577db7ea2319aa065da4daf5528a9703418d07c27f713"
+content-hash = "1859f5c972892b5588797cd160055a9dcc35287296747e6f383abd5a62ab3198"
 
 [metadata.files]
 absl-py = [
@@ -935,6 +943,9 @@ torch = [
     {file = "torch-1.8.1-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:a50ea8ed900927fb30cadb63aa7a32fdd59c7d7abe5012348dfbe35a8355c083"},
     {file = "torch-1.8.1-cp39-cp39-win_amd64.whl", hash = "sha256:dac4d10494e74f7e553c92d7263e19ea501742c4825ddd26c4decfa27be95981"},
     {file = "torch-1.8.1-cp39-none-macosx_10_9_x86_64.whl", hash = "sha256:225ee4238c019b28369c71977327deeeb2bd1c6b8557e6fcf631b8866bdc5447"},
+]
+transforms3d = [
+    {file = "transforms3d-0.3.1.tar.gz", hash = "sha256:404c7797c78aa461cb8043081901fc5517cef342d5ff56becd74a7967ba88d78"},
 ]
 typing-extensions = [
     {file = "typing_extensions-3.7.4.3-py2-none-any.whl", hash = "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"},
