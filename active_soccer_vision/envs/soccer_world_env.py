@@ -41,7 +41,7 @@ class SoccerWorldEnv(gym.Env):
                 random.uniform(1, self.field_size[1])))
         self.robot_pose = None
         
-        self.camera = Camera(fov=math.radians(45), width=1080, height=1920)
+        self.camera = Camera(fov=math.radians(45), width=1920, height=1080)
 
     def step(self, action):
         observation = np.zeros((self.resolution * self.field_size[1], self.resolution * self.field_size[0], 3), dtype=np.uint8)
