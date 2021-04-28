@@ -6,9 +6,9 @@ class robot_position_gen(object):
     def __init__(self,
                  robot_init_position=(0.0, 0.0),
                  init_velocity=(-0.1, -0.1),
-                 walk_speed_factor=1,
+                 walk_speed_factor=0.5,
                  time_delta = 0.1,
-                 ball_noise = 0.1,
+                 robot_noise = 0.05,
                  velocity_to_robot_noise = 0.2,
                  robot_position_interval = (9.0, 6.0),
                  back_velocity = 1):
@@ -16,7 +16,7 @@ class robot_position_gen(object):
         self._robot_position = np.array(robot_init_position)
         self._velocity = np.array(init_velocity)
         self._time_delta = time_delta
-        self._ball_noise = ball_noise
+        self._robot_noise = robot_noise
         self._walk_speed_factor = walk_speed_factor
         self._velocity_to_robot_noise = velocity_to_robot_noise
         self._robot_position_interval = robot_position_interval
@@ -27,7 +27,7 @@ class robot_position_gen(object):
 
     def __next__(self):
         if random.randrange(0, 100) / 100 < 0.1: self.walk()
-        if random.randrange(0, 100) / 100 < 0.3: self._velocity = np.array([0.01, 0.01])
+        if random.randrange(0, 100) / 100 < 0.01: self._velocity = np.array([0.0, 0.0])
         self._apply_velocity()
         self.push_in_field()
         return self._robot_with_noise() , self._robot_position
@@ -56,6 +56,6 @@ class robot_position_gen(object):
         return \
             np.clip(
                 self._robot_position + \
-                np.random.randn(2) * self._ball_noise * \
+                np.random.randn(2) * self._robot_noise * \
                 max(1, np.linalg.norm(self._velocity) * self._velocity_to_robot_noise),
                 np.array([0.0, 0.0]), np.array(self._robot_position_interval))
