@@ -10,7 +10,7 @@ class Camera:
         self.width = width
 
         T_cam = [4.5, 3.0, 1.0]
-        R_cam = transforms3d.euler.euler2mat(0, math.radians(45), 0)
+        R_cam = transforms3d.euler.euler2mat(math.pi/2, math.radians(10), 0)
         self.camera_frame = transforms3d.affines.compose(T_cam, R_cam, np.ones(3))
 
         R_camera_optical_frame = [[0,0,1], [0, -1, 0], [1, 0, 0]]
@@ -112,12 +112,21 @@ class Camera:
         return ray_directions
 
     def get_projected_image_corners(self):
-        return np.array([
-            self.get_pixel_position_in_world(np.array([self.width, 0, 1.0]))[:2],
-            self.get_pixel_position_in_world(np.array([self.width, self.height, 1.0]))[:2],
-            self.get_pixel_position_in_world(np.array([0, self.height, 1.0]))[:2],
-            self.get_pixel_position_in_world(np.array([0, 0, 1.0]))[:2],
-        ])
+        p1 = self.get_pixel_position_in_world(np.array([self.width, 0, 1.0]))[:2]
+        i = 10
+        while np.isnan(p1[0]) and i < self.height - 10:
+            print(f"Right {i}")
+            p1 = self.get_pixel_position_in_world(np.array([self.width, i, 1.0]))[:2]
+            i += 10
+        p2 = self.get_pixel_position_in_world(np.array([self.width, self.height, 1.0]))[:2]
+        p3 = self.get_pixel_position_in_world(np.array([0, self.height, 1.0]))[:2]
+        p4 = self.get_pixel_position_in_world(np.array([0, 0, 1.0]))[:2]
+        i = 10
+        while np.isnan(p4[0]) and i < self.height - 10:
+            print(f"Left {i}")
+            p4 = self.get_pixel_position_in_world(np.array([0, i, 1.0]))[:2]
+            i += 10
+        return np.array([p1, p2, p3, p4])
 
 
 if __name__ == '__main__':
@@ -128,3 +137,6 @@ if __name__ == '__main__':
     cam = Camera()
 
     print(cam.check_if_point_is_visible(point))
+
+
+
