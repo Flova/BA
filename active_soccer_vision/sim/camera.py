@@ -103,7 +103,7 @@ class Camera:
         relative_ray_distance = -plane_normal.dot(- plane_point) / n_dot_u
 
         # we are casting a ray, intersections need to be in front of the camera
-        relative_ray_distance[relative_ray_distance <= 0] = np.nan
+        relative_ray_distance[relative_ray_distance <= 0] = 1000
 
         ray_directions[:,0] = np.multiply(relative_ray_distance, ray_directions[:,0])
         ray_directions[:,1] = np.multiply(relative_ray_distance, ray_directions[:,1])
@@ -112,21 +112,11 @@ class Camera:
         return ray_directions
 
     def get_projected_image_corners(self):
-        p1 = self.get_pixel_position_in_world(np.array([self.width, 0, 1.0]))[:2]
-        i = 10
-        while np.isnan(p1[0]) and i < self.height - 10:
-            print(f"Right {i}")
-            p1 = self.get_pixel_position_in_world(np.array([self.width, i, 1.0]))[:2]
-            i += 10
-        p2 = self.get_pixel_position_in_world(np.array([self.width, self.height, 1.0]))[:2]
-        p3 = self.get_pixel_position_in_world(np.array([0, self.height, 1.0]))[:2]
-        p4 = self.get_pixel_position_in_world(np.array([0, 0, 1.0]))[:2]
-        i = 10
-        while np.isnan(p4[0]) and i < self.height - 10:
-            print(f"Left {i}")
-            p4 = self.get_pixel_position_in_world(np.array([0, i, 1.0]))[:2]
-            i += 10
-        return np.array([p1, p2, p3, p4])
+        return np.array([
+            self.get_pixel_position_in_world(np.array([self.width, 0, 1.0]))[:2],
+            self.get_pixel_position_in_world(np.array([self.width, self.height, 1.0]))[:2],
+            self.get_pixel_position_in_world(np.array([0, self.height, 1.0]))[:2],
+            self.get_pixel_position_in_world(np.array([0, 0, 1.0]))[:2]])
 
 
 if __name__ == '__main__':
