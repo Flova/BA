@@ -16,17 +16,17 @@ class SoccerWorldEnv(gym.Env):
 
     def __init__(self):
         super().__init__()
-
-        self.action_space = spaces.Box(-1, 1, (2,))
+        
+        action_ones = np.ones((2,))
+        self.action_space = spaces.Box(-action_ones, action_ones, dtype=np.float32)
 
         self.resolution = 100
         self.field_size = (9, 6)
 
         #self.observation_space = spaces.Box(low=0, high=255,
         #                                    shape=(self.resolution * self.field_size[1], self.resolution * self.field_size[0], 3), dtype=np.uint8)
-        self.action_space = spaces.Box(-1, 1, (12,))
+        self.observation_space = spaces.Box(0, 1, (7,), dtype=np.float)
 
-        self.seed = 42
         self.time_delta = 1/10
 
         self.ball_position_generator = ball_position_gen( 
@@ -35,6 +35,8 @@ class SoccerWorldEnv(gym.Env):
                 random.uniform(0, self.field_size[0]), 
                 random.uniform(1, self.field_size[1])))
         self.ball_position = None
+        self._last_observed_ball_position = np.array([self.field_size[0]/2, self.field_size[1]/2])
+        self._last_observed_ball_position_conf = 0.0
 
         self.robot_position_generator = robot_position_gen(
             time_delta=self.time_delta, 
@@ -45,28 +47,67 @@ class SoccerWorldEnv(gym.Env):
         
         self.camera = Camera(fov=math.radians(45), width=1920, height=1080)
 
+        self.counter = 0
+
     def step(self, action):
-        # Init observation
-        observation = np.zeros((12,))
 
         # Generate ball and robot pose
         self.ball_position, _ = self.ball_position_generator.__next__()
         self.robot_pose, _ = self.robot_position_generator.__next__()
 
-
         # Apply action to the camera
-        _,p,y = transforms3d.euler.mat2euler(
+        _, camera_pitch, camera_yaw = transforms3d.euler.mat2euler(
             transforms3d.affines.decompose(self.camera.camera_frame)[1])
-        R = transforms3d.euler.euler2mat(math.pi/2, (action[1] + p)%math.tau, (action[0] + y)%math.tau)
+        camera_pitch = min(max(camera_pitch + action[1]*self.time_delta, 0), 80)
+        camera_yaw = (camera_yaw + action[0]*self.time_delta)%math.tau
+        R = transforms3d.euler.euler2mat(math.pi/2, camera_pitch, camera_yaw)
         self.camera.camera_frame = transforms3d.affines.compose(np.array([self.robot_pose[0], self.robot_pose[1], 1.0]), R, np.ones(3))
 
-        reward = 0
-        done = False
-        info = {"Lol": "no"}
+        # Drop ball confidence
+        self._last_observed_ball_position_conf = max(self._last_observed_ball_position_conf - 0.01 * self.time_delta, 0.0)
+
+        # Calculate reward and ball observation
+        if self.camera.check_if_point_is_visible(self.ball_position):
+            reward = 1
+            self._last_observed_ball_position = self.ball_position
+            self._last_observed_ball_position_conf = 1.0
+        else:
+            reward = 0
+
+        # Build observation
+        observation = np.array([
+            self.robot_pose[0]/self.field_size[0],
+            self.robot_pose[1]/self.field_size[1],
+            (camera_pitch % math.tau) / math.tau,
+            (camera_yaw % math.tau) / math.tau,
+            self._last_observed_ball_position[0]/self.field_size[0],
+            self._last_observed_ball_position[1]/self.field_size[1],
+            self._last_observed_ball_position_conf], dtype=np.float32)
+
+        #self.render()
+        done = self.counter > 2000
+        self.counter += 1
+        info = {}
         return observation, reward, done, info
 
     def reset(self):
-        observation = np.zeros((12,))
+        observation = np.zeros((7,), dtype=np.float32)
+        self.counter = 0
+        self.ball_position_generator = ball_position_gen( 
+            time_delta=self.time_delta, 
+            ball_init_position=(
+                random.uniform(0, self.field_size[0]), 
+                random.uniform(1, self.field_size[1])))
+        self.ball_position = None
+        self._last_observed_ball_position = np.array([self.field_size[0]/2, self.field_size[1]/2])
+        self._last_observed_ball_position_conf = 0.0
+
+        self.robot_position_generator = robot_position_gen(
+            time_delta=self.time_delta, 
+            robot_init_position=(
+                random.uniform(0, self.field_size[0]), 
+                random.uniform(1, self.field_size[1])))
+        self.robot_pose = None
         return observation
 
     def render(self, mode='human'):
@@ -99,16 +140,17 @@ class SoccerWorldEnv(gym.Env):
                     else:
                         cv2.circle(canvas, tuple([int(e * self.resolution) for e in ball_position]), 5, (0,0,255), -1)
         
-        # Check if the ball is vivible
+        # Check if the ball is visable
         if self.camera.check_if_point_is_visible(self.ball_position):
             cv2.circle(canvas, tuple([int(e * self.resolution) for e in self.ball_position]), 10, (0,255,0), -1)
         else:
             cv2.circle(canvas, tuple([int(e * self.resolution) for e in self.ball_position]), 10, (0,0,255), -1)
-            pass
 
         # SHow the image
         cv2.imshow("Dist", canvas)
         cv2.waitKey(1)
+
+        return canvas
     
     def close (self):
         pass
