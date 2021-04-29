@@ -27,13 +27,20 @@ class SoccerWorldEnv(gym.Env):
 
         observation = self.sim.step(action)
 
-        reward = self.sim.get_reward()
+        reward = self._get_reward()
 
         #self.render()
         done = self.counter > 2000
         self.counter += 1
         info = {}
         return observation, reward, done, info
+
+    def _get_reward(self):
+        # Calculate reward
+        if self.sim.camera.check_if_point_is_visible(self.sim.ball_position):
+            return 1
+        else:
+            return 0
 
     def reset(self):
         self.sim = SoccerWorldSim()

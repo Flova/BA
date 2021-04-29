@@ -72,13 +72,6 @@ class SoccerWorldSim:
 
         return observation
 
-    def get_reward(self):
-        # Calculate reward
-        if self.camera.check_if_point_is_visible(self.ball_position):
-            return 1
-        else:
-            return 0
-
     def render(self, mode='human'):
         # Create canvas
         canvas = np.zeros((self.resolution * self.field_size[1], self.resolution * self.field_size[0], 3), dtype=np.uint8)
