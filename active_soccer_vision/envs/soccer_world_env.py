@@ -15,7 +15,7 @@ class SoccerWorldEnv(gym.Env):
         action_ones = np.ones((2,))
         self.action_space = spaces.Box(-action_ones, action_ones, dtype=np.float32)
 
-        self.observation_space = spaces.Box(0, 1, (7,), dtype=np.float)
+        self.observation_space = spaces.Box(0, 1, (9,), dtype=np.float)
 
         self._sim_length = 2000
 
@@ -46,7 +46,7 @@ class SoccerWorldEnv(gym.Env):
 
     def reset(self):
         self.sim = SoccerWorldSim()
-        return np.zeros((7,), dtype=np.float32)
+        return np.zeros((9,), dtype=np.float32)
 
     def render(self, mode='human'):
         viz = self.sim.render()

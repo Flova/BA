@@ -7,7 +7,7 @@ from gym import spaces
 from scipy.stats import multivariate_normal
 
 from active_soccer_vision.sim.ball import ball_position_gen
-from active_soccer_vision.sim.robot import robot_position_gen
+from active_soccer_vision.sim.robot import robot_position_gen, robot_orientation_gen, Robot
 from active_soccer_vision.sim.camera import Camera
 
 class SoccerWorldSim:
@@ -29,28 +29,33 @@ class SoccerWorldSim:
         self._last_observed_ball_position = np.array([self.field_size[0]/2, self.field_size[1]/2])
         self._last_observed_ball_position_conf = 0.0
 
-        self.robot_position_generator = robot_position_gen(
+        robot_position_generator = robot_position_gen(
             time_delta=self.time_delta, 
             robot_init_position=(
                 random.uniform(0, self.field_size[0]), 
                 random.uniform(1, self.field_size[1])))
-        self.robot_pose = None
+
+        robot_orientation_generator = robot_orientation_gen(
+            time_delta=self.time_delta,
+        )
         
+        self.robot = Robot(robot_position_generator, robot_orientation_generator)
+
         self.camera = Camera(fov=math.radians(45), width=1920, height=1080)
+
+        self.counter = 0
 
     def step(self, action):
 
         # Generate ball and robot pose
         self.ball_position, _ = self.ball_position_generator.__next__()
-        self.robot_pose, _ = self.robot_position_generator.__next__()
 
-        # Apply action to the camera
-        _, camera_pitch, camera_yaw = transforms3d.euler.mat2euler(
-            transforms3d.affines.decompose(self.camera.camera_frame)[1])
-        camera_pitch = min(max(camera_pitch + action[1]*self.time_delta, 0), math.radians(70))
-        camera_yaw = (camera_yaw + action[0]*self.time_delta)%math.tau
-        R = transforms3d.euler.euler2mat(math.pi/2, camera_pitch, camera_yaw)
-        self.camera.camera_frame = transforms3d.affines.compose(np.array([self.robot_pose[0], self.robot_pose[1], 1.0]), R, np.ones(3))
+        self.robot.step()
+
+        self.camera.set_parent_frame(self.robot.get_base_footprint())
+
+        self.camera.set_pan(action[0])
+        self.camera.set_tilt(action[1])
 
         # Drop ball confidence
         self._last_observed_ball_position_conf = max(self._last_observed_ball_position_conf - 0.1 * self.time_delta, 0.0)
@@ -62,13 +67,20 @@ class SoccerWorldSim:
 
         # Build observation
         observation = np.array([
-            self.robot_pose[0]/self.field_size[0],
-            self.robot_pose[1]/self.field_size[1],
-            (camera_pitch % math.tau) / math.tau,
-            (camera_yaw % math.tau) / math.tau,
-            self._last_observed_ball_position[0]/self.field_size[0],
-            self._last_observed_ball_position[1]/self.field_size[1],
-            self._last_observed_ball_position_conf], dtype=np.float32)
+            #self.robot.get_2d_position()[0]/self.field_size[0], # Base footprint position x
+            #self.robot.get_2d_position()[1]/self.field_size[1], # Base footprint position y
+            (math.sin(self.robot.get_heading()) + 1)/2,  # Base footprint heading part 1
+            (math.cos(self.robot.get_heading()) + 1)/2,  # Base footprint heading part 2
+            self.camera.get_2d_position()[0]/self.field_size[0], # Camera position x
+            self.camera.get_2d_position()[1]/self.field_size[1], # Camera position y
+            self.camera.get_pan(normalize=True),  # Current Camera Pan
+            self.camera.get_tilt(normalize=True),  # Current Camera Tilt
+            self._last_observed_ball_position[0]/self.field_size[0],   # Observed ball x
+            self._last_observed_ball_position[1]/self.field_size[1],   # Observed ball y
+            self._last_observed_ball_position_conf,   # Observed ball confidence
+        ], dtype=np.float32)  
+
+        self.counter += 1
 
         return observation
 
@@ -77,15 +89,19 @@ class SoccerWorldSim:
         canvas = np.zeros((self.resolution * self.field_size[1], self.resolution * self.field_size[0], 3), dtype=np.uint8)
 
         # Draw camera wit fov indicator
-        _,_,yaw = transforms3d.euler.mat2euler(
-            transforms3d.affines.decompose(self.camera.camera_frame)[1])
-        robot_in_image = (self.robot_pose * self.resolution).astype(np.int)
+        yaw = self.camera.get_heading()
+        camera_on_canvas = (self.camera.get_2d_position() * self.resolution).astype(np.int)  
         fov = self.camera.fov
-        robot_in_image_heading_vector = robot_in_image + (np.array([math.cos(yaw), math.sin(yaw)]) * self.resolution).astype(np.int)
-        robot_in_image_heading_min_vector = robot_in_image + (np.array([math.cos(yaw - fov/2), math.sin(yaw - fov/2)]) * self.resolution).astype(np.int)
-        robot_in_image_heading_max_vector = robot_in_image + (np.array([math.cos(yaw + fov/2), math.sin(yaw + fov/2)]) * self.resolution).astype(np.int)
-        cv2.line(canvas, tuple(robot_in_image), tuple(robot_in_image_heading_min_vector), (255,255,255), 2)
-        cv2.line(canvas, tuple(robot_in_image), tuple(robot_in_image_heading_max_vector), (255,255,255), 2)
+        camera_in_image_heading_vector = camera_on_canvas + (np.array([math.cos(yaw), math.sin(yaw)]) * self.resolution).astype(np.int)
+        camera_in_image_heading_min_vector = camera_on_canvas + (np.array([math.cos(yaw - fov/2), math.sin(yaw - fov/2)]) * self.resolution).astype(np.int)
+        camera_in_image_heading_max_vector = camera_on_canvas + (np.array([math.cos(yaw + fov/2), math.sin(yaw + fov/2)]) * self.resolution).astype(np.int)
+        cv2.line(canvas, tuple(camera_on_canvas), tuple(camera_in_image_heading_min_vector), (255,255,255), 2)
+        cv2.line(canvas, tuple(camera_on_canvas), tuple(camera_in_image_heading_max_vector), (255,255,255), 2)
+
+        # Draw robot pose
+        robot_on_canvas = (self.robot.get_2d_position() * self.resolution).astype(np.int)  # Todo use different one for camere position
+        robot_in_image_heading_vector = robot_on_canvas + (np.array([math.cos(self.robot.get_heading()), math.sin(self.robot.get_heading())]) * self.resolution).astype(np.int)
+        cv2.arrowedLine(canvas, tuple(robot_on_canvas), tuple(robot_in_image_heading_vector), (255,100,200), 2)
 
         # Draw approximated visible field area
         corners = (self.camera.get_projected_image_corners() * self.resolution).astype(np.int32)

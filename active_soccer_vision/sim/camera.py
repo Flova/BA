@@ -3,14 +3,20 @@ import cv2
 import numpy as np
 import transforms3d
 
+from active_soccer_vision.sim.utils import multiply_list
+
 class Camera:
-    def __init__(self, fov=45, height=1080, width=1920):
+    def __init__(self, fov=45, height=1080, width=1920, pan_limits=[math.radians(-75),math.radians(75)], tilt_limits=[0,math.radians(60)]):
         self.fov = fov
         self.height = height
         self.width = width
+        self.pan_limits=pan_limits
+        self.tilt_limits=tilt_limits
 
-        T_cam = [4.5, 3.0, 1.0]
-        R_cam = transforms3d.euler.euler2mat(math.pi/2, math.radians(10), 0)
+        self.parent_frame = None
+
+        T_cam = [0.0, 0.0, 1.0]
+        R_cam = transforms3d.euler.euler2mat(math.pi/2, 0.0, 0.0)
         self.camera_frame = transforms3d.affines.compose(T_cam, R_cam, np.ones(3))
 
         R_camera_optical_frame = [[0,0,1], [0, -1, 0], [1, 0, 0]]
@@ -34,7 +40,9 @@ class Camera:
             0, 0, 1]).reshape((3,3))
 
     def get_point_in_camera_frame(self, point_in_world_frame):
-        return np.matmul(np.linalg.inv(self.camera_frame), point_in_world_frame)
+        return np.matmul(
+            np.linalg.inv(np.matmul(self.parent_frame, self.camera_frame)), 
+            point_in_world_frame)
 
     def get_point_in_camera_optical_frame(self, point_in_world_frame):
         point = self.get_point_in_camera_frame(point_in_world_frame)
@@ -77,7 +85,7 @@ class Camera:
 
         point = transforms3d.affines.compose(point, np.eye(3), np.ones(3))
 
-        point = np.matmul(np.matmul(self.camera_frame, self.camera_optical_frame), point)
+        point = multiply_list(self.parent_frame, self.camera_frame, self.camera_optical_frame, point)
 
         point, _, _ , _ = transforms3d.affines.decompose(point)
 
@@ -117,6 +125,45 @@ class Camera:
             self.get_pixel_position_in_world(np.array([self.width, self.height, 1.0]))[:2],
             self.get_pixel_position_in_world(np.array([0, self.height, 1.0]))[:2],
             self.get_pixel_position_in_world(np.array([0, 0, 1.0]))[:2]])
+
+    def set_parent_frame(self, parent_frame):
+        self.parent_frame = parent_frame
+
+    def get_heading(self):
+        return transforms3d.euler.mat2euler(
+            transforms3d.affines.decompose(np.matmul(self.parent_frame, self.camera_frame))[1])[2]
+
+    def get_2d_position(self):
+        return transforms3d.affines.decompose(np.matmul(self.parent_frame, self.camera_frame))[0][0:2]
+
+    def get_pan(self, normalize=False):
+        pan = transforms3d.euler.mat2euler(
+            transforms3d.affines.decompose(self.camera_frame)[1])[2]
+        if normalize:
+            pan = (pan - min(self.pan_limits)) / (max(self.pan_limits) - min(self.pan_limits))
+        return pan
+        
+
+    def get_tilt(self, normalize=False):
+        tilt = transforms3d.euler.mat2euler(
+            transforms3d.affines.decompose(self.camera_frame)[1])[1]
+        if normalize:
+            tilt = (tilt - min(self.tilt_limits)) / (max(self.tilt_limits) - min(self.tilt_limits))
+        return tilt
+
+    def set_pan(self, pan):
+        if not self.pan_limits[0] < pan < self.pan_limits[1]: return
+        L, R, _, _ = transforms3d.affines.decompose(self.camera_frame)
+        r, p, _ = transforms3d.euler.mat2euler(R)
+        R = transforms3d.euler.euler2mat(r,p,pan)
+        self.camera_frame = transforms3d.affines.compose(L, R, np.ones(3))
+
+    def set_tilt(self, tilt):
+        if not self.tilt_limits[0] < tilt < self.tilt_limits[1]: return
+        L, R, _, _ = transforms3d.affines.decompose(self.camera_frame)
+        r, _, y = transforms3d.euler.mat2euler(R)
+        R = transforms3d.euler.euler2mat(r,tilt,y)
+        self.camera_frame = transforms3d.affines.compose(L, R, np.ones(3))
 
 
 if __name__ == '__main__':
