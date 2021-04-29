@@ -17,6 +17,8 @@ class SoccerWorldEnv(gym.Env):
 
         self.observation_space = spaces.Box(0, 1, (7,), dtype=np.float)
 
+        self._sim_length = 2000
+
         self.sim = SoccerWorldSim(
 
         )
@@ -30,7 +32,7 @@ class SoccerWorldEnv(gym.Env):
         reward = self._get_reward()
 
         #self.render()
-        done = self.counter > 2000
+        done = self.counter > self._sim_length
         self.counter += 1
         info = {}
         return observation, reward, done, info
