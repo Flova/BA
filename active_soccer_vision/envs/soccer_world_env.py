@@ -45,6 +45,7 @@ class SoccerWorldEnv(gym.Env):
             return 0
 
     def reset(self):
+        self.counter = 0
         self.sim = SoccerWorldSim()
         return np.zeros((9,), dtype=np.float32)
 

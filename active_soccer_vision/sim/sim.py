@@ -54,7 +54,7 @@ class SoccerWorldSim:
 
         self.camera.set_parent_frame(self.robot.get_base_footprint())
 
-        self.camera.set_pan(action[0])
+        self.camera.set_pan(action[0]*2 - 1)
         self.camera.set_tilt(action[1])
 
         # Drop ball confidence
