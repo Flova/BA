@@ -6,7 +6,7 @@ import transforms3d
 from active_soccer_vision.sim.utils import multiply_list
 
 class Camera:
-    def __init__(self, fov=45, height=1080, width=1920, pan_limits=[math.radians(-75),math.radians(75)], tilt_limits=[0,math.radians(60)]):
+    def __init__(self, fov=45, height=1080, width=1920, pan_limits=[math.radians(-90),math.radians(90)], tilt_limits=[0,math.radians(60)]):
         self.fov = fov
         self.height = height
         self.width = width
@@ -154,7 +154,7 @@ class Camera:
     def set_pan(self, pan, normalize=False):
         if normalize:
             pan = (max(self.pan_limits) - min(self.pan_limits)) * pan + min(self.pan_limits)
-        if not self.pan_limits[0] < pan < self.pan_limits[1]: return
+        if not self.pan_limits[0] <= pan <= self.pan_limits[1]: return
         L, R, _, _ = transforms3d.affines.decompose(self.camera_frame)
         r, p, _ = transforms3d.euler.mat2euler(R)
         R = transforms3d.euler.euler2mat(r,p,pan)
@@ -163,7 +163,7 @@ class Camera:
     def set_tilt(self, tilt, normalize=False):
         if normalize:
             tilt = (max(self.tilt_limits) - min(self.tilt_limits)) * tilt + min(self.tilt_limits)
-        if not self.tilt_limits[0] < tilt < self.tilt_limits[1]: return
+        if not self.tilt_limits[0] <= tilt <= self.tilt_limits[1]: return
         L, R, _, _ = transforms3d.affines.decompose(self.camera_frame)
         r, _, y = transforms3d.euler.mat2euler(R)
         R = transforms3d.euler.euler2mat(r,tilt,y)

@@ -1,3 +1,4 @@
+import time
 import math
 import transforms3d
 import cv2
@@ -43,8 +44,6 @@ class SoccerWorldSim:
 
         self.camera = Camera(fov=math.radians(45), width=1920, height=1080)
 
-        self.counter = 0
-
     def step(self, action):
 
         # Generate ball and robot pose
@@ -54,8 +53,8 @@ class SoccerWorldSim:
 
         self.camera.set_parent_frame(self.robot.get_base_footprint())
 
-        self.camera.set_pan(action[0]*2 - 1)
-        self.camera.set_tilt(action[1])
+        self.camera.set_pan(action[0], normalize=True)
+        self.camera.set_tilt(action[1], normalize=True)
 
         # Drop ball confidence
         self._last_observed_ball_position_conf = max(self._last_observed_ball_position_conf - 0.1 * self.time_delta, 0.0)
@@ -73,14 +72,12 @@ class SoccerWorldSim:
             (math.cos(self.robot.get_heading()) + 1)/2,  # Base footprint heading part 2
             self.camera.get_2d_position()[0]/self.field_size[0], # Camera position x
             self.camera.get_2d_position()[1]/self.field_size[1], # Camera position y
-            self.camera.get_pan(normalize=True),  # Current Camera Pan
-            self.camera.get_tilt(normalize=True),  # Current Camera Tilt
+            #self.camera.get_pan(normalize=True),  # Current Camera Pan
+            #self.camera.get_tilt(normalize=True),  # Current Camera Tilt
             self._last_observed_ball_position[0]/self.field_size[0],   # Observed ball x
             self._last_observed_ball_position[1]/self.field_size[1],   # Observed ball y
             self._last_observed_ball_position_conf,   # Observed ball confidence
         ], dtype=np.float32)  
-
-        self.counter += 1
 
         return observation
 
