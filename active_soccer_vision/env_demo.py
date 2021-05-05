@@ -9,6 +9,5 @@ check_env(env)
 env.reset()
 
 for i in range(8000):
-    print(env.step([0.0, 0.5]))
+    print(env.step([-1.0, 0.0]))
     env.render()
-    time.sleep(env.sim.time_delta)

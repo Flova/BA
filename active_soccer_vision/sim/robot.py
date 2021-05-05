@@ -83,7 +83,7 @@ class robot_orientation_gen(object):
         if random.randrange(0, 100) / 100 < 0.1: self.turn()
         if random.randrange(0, 100) / 100 < 0.01: self._velocity = np.array([0.0, 0.0, 0.0])
         self._apply_velocity()
-        return self._robot_orientation_with_noise(), None
+        return np.array([0,0,0.0]), None#self._robot_orientation_with_noise(), None
 
     def _apply_velocity(self):
         self._robot_orientation += self._velocity * self._time_delta

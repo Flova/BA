@@ -44,6 +44,9 @@ class SoccerWorldSim:
 
         self.camera = Camera(fov=math.radians(45), width=1920, height=1080)
 
+        self._last_pan = 0.0
+        self._last_tilt = 0.0
+
     def step(self, action):
 
         # Generate ball and robot pose
@@ -53,8 +56,8 @@ class SoccerWorldSim:
 
         self.camera.set_parent_frame(self.robot.get_base_footprint())
 
-        self.camera.set_pan(action[0], normalize=True)
-        self.camera.set_tilt(action[1], normalize=True)
+        self.camera.set_pan((self.camera.get_pan() + action[0])%math.tau)
+        self.camera.set_tilt((action[1] + 1)/2, normalize=True)
 
         # Drop ball confidence
         self._last_observed_ball_position_conf = max(self._last_observed_ball_position_conf - 0.1 * self.time_delta, 0.0)
@@ -68,16 +71,19 @@ class SoccerWorldSim:
         observation = np.array([
             #self.robot.get_2d_position()[0]/self.field_size[0], # Base footprint position x
             #self.robot.get_2d_position()[1]/self.field_size[1], # Base footprint position y
-            (math.sin(self.robot.get_heading()) + 1)/2,  # Base footprint heading part 1
-            (math.cos(self.robot.get_heading()) + 1)/2,  # Base footprint heading part 2
+            #(math.sin(self.robot.get_heading()) + 1)/2,  # Base footprint heading part 1
+            #(math.cos(self.robot.get_heading()) + 1)/2,  # Base footprint heading part 2
             self.camera.get_2d_position()[0]/self.field_size[0], # Camera position x
             self.camera.get_2d_position()[1]/self.field_size[1], # Camera position y
-            #self.camera.get_pan(normalize=True),  # Current Camera Pan
-            #self.camera.get_tilt(normalize=True),  # Current Camera Tilt
+            self.camera.get_pan(normalize=True),  # Current Camera Pan
+            self.camera.get_tilt(normalize=True),  # Current Camera Tilt
             self._last_observed_ball_position[0]/self.field_size[0],   # Observed ball x
             self._last_observed_ball_position[1]/self.field_size[1],   # Observed ball y
             self._last_observed_ball_position_conf,   # Observed ball confidence
-        ], dtype=np.float32)  
+        ], dtype=np.float32)
+
+        self._last_pan = self.camera.get_pan(normalize=True),  # Current Camera Pan
+        self._last_tilt = self.camera.get_tilt(normalize=True),  # Current Camera Tilt
 
         return observation
 

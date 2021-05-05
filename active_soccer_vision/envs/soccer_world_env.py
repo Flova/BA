@@ -13,7 +13,7 @@ class SoccerWorldEnv(gym.Env):
     def __init__(self):
         super().__init__()
 
-        self.action_space = spaces.Box(np.array([0,0]), np.array([1,1]), dtype=np.float32)
+        self.action_space = spaces.Box(np.array([-1,-1]), np.array([1,1]), dtype=np.float32)
 
         self.observation_space = spaces.Box(0, 1, (7,), dtype=np.float)
 
@@ -53,7 +53,7 @@ class SoccerWorldEnv(gym.Env):
         if self.counter != 0: 
             viz = self.sim.render()
 
-            time.sleep(0.1)
+            time.sleep(self.sim.time_delta)
 
             # SHow the image
             cv2.imshow("Dist", viz)
