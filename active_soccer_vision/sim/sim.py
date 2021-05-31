@@ -45,7 +45,10 @@ class SoccerWorldSim:
         self.camera = Camera(fov=math.radians(45), width=1920, height=1080)
 
         self._last_pan = 0.0
-        self._last_tilt = 0.0
+        self._last_tilt = 0.0  
+        self._sim_step = 0
+
+        self.action_mode = "Pattern"  # Velocity, Position
 
     def step(self, action):
 
@@ -56,8 +59,15 @@ class SoccerWorldSim:
 
         self.camera.set_parent_frame(self.robot.get_base_footprint())
 
-        self.camera.set_pan((self.camera.get_pan() + action[0])%math.tau)
-        self.camera.set_tilt((action[1] + 1)/2, normalize=True)
+        if self.action_mode == "Pattern":
+            self.camera.set_pan(
+                min(1, max(0, (math.sin(self._sim_step * math.pi * 0.05) * action[0] + action[1] + 1) / 2)), normalized=True)
+            self.camera.set_tilt(0.3, normalized=True)
+        elif self.action_mode == "Position":
+            self.camera.set_pan((action[0] + 1)/2, normalized=True)
+            self.camera.set_tilt((action[1] + 1)/2, normalized=True)
+        else:
+            print("Unknown action mode")
 
         # Drop ball confidence
         self._last_observed_ball_position_conf = max(self._last_observed_ball_position_conf - 0.1 * self.time_delta, 0.0)
@@ -84,6 +94,8 @@ class SoccerWorldSim:
 
         self._last_pan = self.camera.get_pan(normalize=True),  # Current Camera Pan
         self._last_tilt = self.camera.get_tilt(normalize=True),  # Current Camera Tilt
+
+        self._sim_step += 1
 
         return observation
 
