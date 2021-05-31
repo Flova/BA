@@ -151,8 +151,8 @@ class Camera:
             tilt = (tilt - min(self.tilt_limits)) / (max(self.tilt_limits) - min(self.tilt_limits))
         return tilt
 
-    def set_pan(self, pan, normalize=False):
-        if normalize:
+    def set_pan(self, pan, normalized=False):
+        if normalized:
             pan = (max(self.pan_limits) - min(self.pan_limits)) * pan + min(self.pan_limits)
         #if not self.pan_limits[0] <= pan <= self.pan_limits[1]: return
         L, R, _, _ = transforms3d.affines.decompose(self.camera_frame)
@@ -160,8 +160,8 @@ class Camera:
         R = transforms3d.euler.euler2mat(r,p,pan)
         self.camera_frame = transforms3d.affines.compose(L, R, np.ones(3))
 
-    def set_tilt(self, tilt, normalize=False):
-        if normalize:
+    def set_tilt(self, tilt, normalized=False):
+        if normalized:
             tilt = (max(self.tilt_limits) - min(self.tilt_limits)) * tilt + min(self.tilt_limits)
         if not self.tilt_limits[0] <= tilt <= self.tilt_limits[1]: return
         L, R, _, _ = transforms3d.affines.decompose(self.camera_frame)
