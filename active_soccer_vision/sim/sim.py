@@ -61,7 +61,7 @@ class SoccerWorldSim:
 
         if self.action_mode == "Pattern":
             self.camera.set_pan(
-                min(1, max(0, (math.sin(self._sim_step * math.pi * 0.05) * action[0] + action[1] + 1) / 2)), normalized=True)
+                min(1, max(0, (math.sin(self._sim_step * math.pi * 0.05) * ((action[0] + 1) / 2)  + action[1] + 1) / 2)), normalized=True)
             self.camera.set_tilt(0.3, normalized=True)
         elif self.action_mode == "Position":
             self.camera.set_pan((action[0] + 1)/2, normalized=True)
@@ -87,6 +87,8 @@ class SoccerWorldSim:
             self.camera.get_2d_position()[1]/self.field_size[1], # Camera position y
             self.camera.get_pan(normalize=True),  # Current Camera Pan
             self.camera.get_tilt(normalize=True),  # Current Camera Tilt
+            (action[0] + 1)/2,
+            (action[1] + 1)/2,
             self._last_observed_ball_position[0]/self.field_size[0],   # Observed ball x
             self._last_observed_ball_position[1]/self.field_size[1],   # Observed ball y
             self._last_observed_ball_position_conf,   # Observed ball confidence
