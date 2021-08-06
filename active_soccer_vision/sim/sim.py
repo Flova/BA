@@ -44,13 +44,18 @@ class SoccerWorldSim:
 
         self.camera = Camera(fov=math.radians(45), width=1920, height=1080)
 
-        self._last_pan = 0.0
-        self._last_tilt = 0.0  
+        self._last_pan = 0.5
+        self._last_tilt = 0.5  
         self._sim_step = 0
 
-        self.action_mode = "Pattern"  # Velocity, Position
+        self.action_mode = "Velocity"  # Pattern, Velocity, Position
 
     def step(self, action):
+
+        #print(action)
+
+        # Scalse actions to 0-1
+        action = (action + 1) / 2
 
         # Generate ball and robot pose
         self.ball_position, _ = self.ball_position_generator.__next__()
@@ -61,11 +66,17 @@ class SoccerWorldSim:
 
         if self.action_mode == "Pattern":
             self.camera.set_pan(
-                min(1, max(0, (math.sin(self._sim_step * math.pi * 0.05) * ((action[0] + 1) / 2)  + action[1] + 1) / 2)), normalized=True)
+                min(1, 
+                    max(0, 
+                        (math.sin(self._sim_step * math.pi * 0.5 * self.time_delta) + 1) * 0.5 * action[0] + (action[1] - 0.5))), 
+                normalized=True)
             self.camera.set_tilt(0.3, normalized=True)
         elif self.action_mode == "Position":
-            self.camera.set_pan((action[0] + 1)/2, normalized=True)
-            self.camera.set_tilt((action[1] + 1)/2, normalized=True)
+            self.camera.set_pan(action[0], normalized=True)
+            self.camera.set_tilt(action[1], normalized=True)
+        elif self.action_mode == "Velocity":
+            self.camera.set_pan(self.camera.get_pan(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
+            self.camera.set_tilt(0.3) # self.camera.get_tilt(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
         else:
             print("Unknown action mode")
 
@@ -79,23 +90,26 @@ class SoccerWorldSim:
 
         # Build observation
         observation = np.array([
-            #self.robot.get_2d_position()[0]/self.field_size[0], # Base footprint position x
-            #self.robot.get_2d_position()[1]/self.field_size[1], # Base footprint position y
+            self.robot.get_2d_position()[0]/self.field_size[0], # Base footprint position x
+            self.robot.get_2d_position()[1]/self.field_size[1], # Base footprint position y
             #(math.sin(self.robot.get_heading()) + 1)/2,  # Base footprint heading part 1
             #(math.cos(self.robot.get_heading()) + 1)/2,  # Base footprint heading part 2
-            self.camera.get_2d_position()[0]/self.field_size[0], # Camera position x
-            self.camera.get_2d_position()[1]/self.field_size[1], # Camera position y
+            #self.camera.get_2d_position()[0]/self.field_size[0], # Camera position x
+            #self.camera.get_2d_position()[1]/self.field_size[1], # Camera position y
             self.camera.get_pan(normalize=True),  # Current Camera Pan
-            self.camera.get_tilt(normalize=True),  # Current Camera Tilt
-            (action[0] + 1)/2,
-            (action[1] + 1)/2,
+            #self.camera.get_tilt(normalize=True),  # Current Camera Tilt
+            self._last_pan,
+            #self._last_tilt,
+            (math.sin(self._sim_step * math.pi * 0.2 * self.time_delta) + 1) * 0.5,
+            #(action[0] + 1)/2,
+            #(action[1] + 1)/2,
             self._last_observed_ball_position[0]/self.field_size[0],   # Observed ball x
             self._last_observed_ball_position[1]/self.field_size[1],   # Observed ball y
             self._last_observed_ball_position_conf,   # Observed ball confidence
         ], dtype=np.float32)
 
-        self._last_pan = self.camera.get_pan(normalize=True),  # Current Camera Pan
-        self._last_tilt = self.camera.get_tilt(normalize=True),  # Current Camera Tilt
+        self._last_pan = self.camera.get_pan(normalize=True)  # Current Camera Pan
+        self._last_tilt = self.camera.get_tilt(normalize=True)  # Current Camera Tilt
 
         self._sim_step += 1
 
