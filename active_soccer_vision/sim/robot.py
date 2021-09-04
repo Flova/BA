@@ -13,7 +13,7 @@ class robot_position_gen(object):
                  velocity_to_robot_noise = 0.2,
                  robot_position_interval = (9.0, 6.0),
                  back_velocity = 1):
-      
+
         self._robot_position = np.array(robot_init_position)
         self._velocity = np.array(init_velocity)
         self._time_delta = time_delta
@@ -22,7 +22,7 @@ class robot_position_gen(object):
         self._velocity_to_robot_noise = velocity_to_robot_noise
         self._robot_position_interval = robot_position_interval
         self._back_velocity = back_velocity
- 
+
     def __iter__(self):
         return self
 
@@ -69,13 +69,13 @@ class robot_orientation_gen(object):
                  turn_speed_factor=1,
                  time_delta = 0.1,
                  noise = 0.0000001):
-      
+
         self._robot_orientation = np.array(robot_init_orientation)
         self._velocity = np.array(init_velocity)
         self._time_delta = time_delta
         self._noise = noise
         self._turn_speed_factor = turn_speed_factor
- 
+
     def __iter__(self):
         return self
 
@@ -83,7 +83,7 @@ class robot_orientation_gen(object):
         if random.randrange(0, 100) / 100 < 0.1: self.turn()
         if random.randrange(0, 100) / 100 < 0.01: self._velocity = np.array([0.0, 0.0, 0.0])
         self._apply_velocity()
-        return np.array([0,0,0.0]), None#self._robot_orientation_with_noise(), None
+        return self._robot_orientation_with_noise(), None
 
     def _apply_velocity(self):
         self._robot_orientation += self._velocity * self._time_delta
@@ -109,15 +109,15 @@ class Robot:
 
     def get_base_footprint(self):
         return transforms3d.affines.compose(
-                [self.position[0], self.position[1], 0.0], 
+                [self.position[0], self.position[1], 0.0],
                 transforms3d.euler.euler2mat(
-                    self.orientation[0], 
+                    self.orientation[0],
                     self.orientation[1],
                     self.orientation[2]
                 ),
                 np.ones(3)
             )
-    
+
     def get_heading(self):
         return self.orientation[2]
 
