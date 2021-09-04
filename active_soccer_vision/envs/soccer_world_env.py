@@ -54,16 +54,16 @@ class SoccerWorldEnv(gym.Env):
         return np.zeros((8,), dtype=np.float32)
 
     def render(self, mode='human'):
-        if self.counter != 0: 
+        if self.counter != 0:
             viz = self.sim.render()
 
             time.sleep(self.sim.time_delta)
 
             # SHow the image
-            cv2.imshow("Dist", viz)
+            cv2.imshow("Top Down Viz", viz)
             cv2.waitKey(1)
 
             return viz
-    
+
     def close (self):
         pass
