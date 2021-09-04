@@ -23,8 +23,6 @@ rl:
       estimated_robot_states: True
     maps:
       observation_maps: True
-      height: 9
-      width: 6
       estimated_robot_states_map: True
   action:
     mode: "Velocity"  # Pattern, Velocity, Position
