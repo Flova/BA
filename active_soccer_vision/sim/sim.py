@@ -16,7 +16,7 @@ class SoccerWorldSim:
     def __init__(self):
         super().__init__()
 
-        self.resolution = 100
+        self.render_resolution = 100
         self.field_size = (9, 6)
 
         self.time_delta = 1/10
@@ -66,10 +66,11 @@ class SoccerWorldSim:
             "action_history": False,
             "estimated_ball_state": True,
             "estimated_robot_states": True,
+            "observation_maps": True,
+            "estimated_robot_states_map": True
         }
 
     def step(self, action):
-
         # Scalse actions to 0-1
         action = (action + 1) / 2
 
@@ -106,57 +107,57 @@ class SoccerWorldSim:
                 robot.observe()
 
         # Build observation
-        observation = []
+        observation_vector = []
 
         # Base position
         if self.observation_config["base_position"]:
-            observation += [
+            observation_vector += [
                 self.my_robot.get_2d_position()[0]/self.field_size[0], # Base footprint position x
                 self.my_robot.get_2d_position()[1]/self.field_size[1], # Base footprint position y
             ]
 
         # Base heading
         if self.observation_config["base_heading"]:
-            observation += [
+            observation_vector += [
                 (math.sin(self.my_robot.get_heading()) + 1)/2,  # Base footprint heading part 1
                 (math.cos(self.my_robot.get_heading()) + 1)/2,  # Base footprint heading part 2
             ]
 
         # Camera position
         if self.observation_config["camera_position"]:
-            observation += [
+            observation_vector += [
                 self.camera.get_2d_position()[0]/self.field_size[0], # Camera position x
                 self.camera.get_2d_position()[1]/self.field_size[1], # Camera position y
             ]
 
         # Neck state
         if self.observation_config["neck_joint_position"]:
-            observation += [
+            observation_vector += [
                 self.camera.get_pan(normalize=True),  # Current Camera Pan
                 #self.camera.get_tilt(normalize=True),  # Current Camera Tilt
             ]
         if self.observation_config["neck_joint_position_history"]:
-            observation += [
+            observation_vector += [
                 self._last_pan,
                 #self._last_tilt,
             ]
 
         # Phase
         if self.observation_config["sin_phase"]:
-            observation += [
+            observation_vector += [
                 (math.sin(self._sim_step * math.pi * 0.2 * self.time_delta) + 1) * 0.5,
             ]
 
         # Action history
         if self.observation_config["action_history"]:
-            observation += [
+            observation_vector += [
                 (action[0] + 1)/2,
                 (action[1] + 1)/2,
             ]
 
         # Ball world model
         if self.observation_config["estimated_ball_state"]:
-            observation += [
+            observation_vector += [
                 self.ball.get_last_observed_2d_position()[0][0]/self.field_size[0],   # Observed ball x
                 self.ball.get_last_observed_2d_position()[0][1]/self.field_size[1],   # Observed ball y
                 self.ball.get_last_observed_2d_position()[1],   # Observed ball confidence
@@ -165,37 +166,58 @@ class SoccerWorldSim:
         # Robots world model
         if self.observation_config["estimated_robot_states"]:
             for robot in self.other_robots:
-                observation += [
+                observation_vector += [
                     robot.get_last_observed_2d_position()[0][0]/self.field_size[0], # Observed x
                     robot.get_last_observed_2d_position()[0][1]/self.field_size[1], # Observed x
                     robot.get_last_observed_2d_position()[1],  # Confidence
                 ]
+
+        # Render observation maps if necessary
+        observation_maps = None
+        if self.observation_config["observation_maps"]:
+            observation_maps = np.array((self.field_size[0], self.field_size[1], 1), dtype=np.float32)
+
+            # Robots world model for the map
+            if self.observation_config["estimated_robot_states_map"]:
+                for robot in self.other_robots:
+                    # Draw robot on map
+                    observation_maps[
+                            robot.get_last_observed_2d_position()[0][0],
+                            robot.get_last_observed_2d_position()[0][0],
+                        ] = robot.get_last_observed_2d_position()[1]
 
         self._last_pan = self.camera.get_pan(normalize=True)  # Current Camera Pan
         self._last_tilt = self.camera.get_tilt(normalize=True)  # Current Camera Tilt
 
         self._sim_step += 1
 
-        return np.array(observation, dtype=np.float32)
+        # Check if we have observation maps
+        if observation_maps:
+            return {
+                "vec": np.array(observation_vector, dtype=np.float32),
+                "map": observation_maps,
+            }
+        else:
+            return np.array(observation_vector, dtype=np.float32)
 
     def render(self, mode='human'):
         # Create canvas
-        canvas = np.zeros((self.resolution * self.field_size[1], self.resolution * self.field_size[0], 3), dtype=np.uint8)
+        canvas = np.zeros((self.render_resolution * self.field_size[1], self.render_resolution * self.field_size[0], 3), dtype=np.uint8)
 
         # Draw camera wit fov indicator
         yaw = self.camera.get_heading()
-        camera_on_canvas = (self.camera.get_2d_position() * self.resolution).astype(np.int)
+        camera_on_canvas = (self.camera.get_2d_position() * self.render_resolution).astype(np.int)
         fov = self.camera.fov
         length = 0.5 #m
-        camera_in_image_heading_min_vector = camera_on_canvas + (np.array([math.cos(yaw - fov/2), math.sin(yaw - fov/2)]) * length * self.resolution).astype(np.int)
-        camera_in_image_heading_max_vector = camera_on_canvas + (np.array([math.cos(yaw + fov/2), math.sin(yaw + fov/2)]) * length * self.resolution).astype(np.int)
+        camera_in_image_heading_min_vector = camera_on_canvas + (np.array([math.cos(yaw - fov/2), math.sin(yaw - fov/2)]) * length * self.render_resolution).astype(np.int)
+        camera_in_image_heading_max_vector = camera_on_canvas + (np.array([math.cos(yaw + fov/2), math.sin(yaw + fov/2)]) * length * self.render_resolution).astype(np.int)
         cv2.line(canvas, tuple(camera_on_canvas), tuple(camera_in_image_heading_min_vector), (255,255,255), 2)
         cv2.line(canvas, tuple(camera_on_canvas), tuple(camera_in_image_heading_max_vector), (255,255,255), 2)
 
         # Draw robot poses
         def draw_robot(robot, length=0.5):
-            robot_on_canvas = (robot.get_2d_position() * self.resolution).astype(np.int)  # Todo use different one for camere position
-            robot_in_image_heading_vector = robot_on_canvas + (np.array([math.cos(robot.get_heading()), math.sin(robot.get_heading())]) * length * self.resolution).astype(np.int)
+            robot_on_canvas = (robot.get_2d_position() * self.render_resolution).astype(np.int)  # Todo use different one for camere position
+            robot_in_image_heading_vector = robot_on_canvas + (np.array([math.cos(robot.get_heading()), math.sin(robot.get_heading())]) * length * self.render_resolution).astype(np.int)
             if self.camera.check_if_point_is_visible(robot.get_2d_position()):
                 color = (100, 255, 100)
             else:
@@ -208,7 +230,7 @@ class SoccerWorldSim:
         [draw_robot(robot) for robot in self.robots]
 
         # Draw approximated visible field area
-        corners = (self.camera.get_projected_image_corners() * self.resolution).astype(np.int32)
+        corners = (self.camera.get_projected_image_corners() * self.render_resolution).astype(np.int32)
         cv2.polylines(canvas,[corners.reshape((-1,1,2))],True,(0,255,255), 5)
 
         render_ball_grid = False
@@ -218,14 +240,14 @@ class SoccerWorldSim:
                 for u in [x / 5.0 for x in range(0, 45)]:
                     ball_position = np.array([i, u], dtype=np.float)
                     if self.camera.check_if_point_is_visible(ball_position):
-                        cv2.circle(canvas, tuple([int(e * self.resolution) for e in ball_position]), 5, (0,255,0), -1)
+                        cv2.circle(canvas, tuple([int(e * self.render_resolution) for e in ball_position]), 5, (0,255,0), -1)
                     else:
-                        cv2.circle(canvas, tuple([int(e * self.resolution) for e in ball_position]), 5, (0,0,255), -1)
+                        cv2.circle(canvas, tuple([int(e * self.render_resolution) for e in ball_position]), 5, (0,0,255), -1)
 
         # Check if the ball is visable
         if self.camera.check_if_point_is_visible(self.ball.get_2d_position()):
-            cv2.circle(canvas, tuple([int(e * self.resolution) for e in self.ball.get_2d_position()]), 10, (0,255,0), -1)
+            cv2.circle(canvas, tuple([int(e * self.render_resolution) for e in self.ball.get_2d_position()]), 10, (0,255,0), -1)
         else:
-            cv2.circle(canvas, tuple([int(e * self.resolution) for e in self.ball.get_2d_position()]), 10, (0,0,255), -1)
+            cv2.circle(canvas, tuple([int(e * self.render_resolution) for e in self.ball.get_2d_position()]), 10, (0,0,255), -1)
 
         return canvas
