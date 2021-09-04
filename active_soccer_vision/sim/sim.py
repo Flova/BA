@@ -56,6 +56,17 @@ class SoccerWorldSim:
 
         self.action_mode = "Velocity"  # Pattern, Velocity, Position
 
+        self.observation_config = {
+            "base_position": True,
+            "base_heading": False,
+            "camera_position": False,
+            "neck_joint_position": True,
+            "neck_joint_position_history": True,
+            "sin_phase": True,
+            "action_history": False,
+            "estimated_ball_state": True,
+        }
+
     def step(self, action):
 
         # Scalse actions to 0-1
@@ -94,31 +105,68 @@ class SoccerWorldSim:
             self._last_observed_ball_position_conf = 1.0
 
         # Build observation
-        observation = np.array([
-            self.my_robot.get_2d_position()[0]/self.field_size[0], # Base footprint position x
-            self.my_robot.get_2d_position()[1]/self.field_size[1], # Base footprint position y
-            #(math.sin(self.my_robot.get_heading()) + 1)/2,  # Base footprint heading part 1
-            #(math.cos(self.my_robot.get_heading()) + 1)/2,  # Base footprint heading part 2
-            #self.camera.get_2d_position()[0]/self.field_size[0], # Camera position x
-            #self.camera.get_2d_position()[1]/self.field_size[1], # Camera position y
-            self.camera.get_pan(normalize=True),  # Current Camera Pan
-            #self.camera.get_tilt(normalize=True),  # Current Camera Tilt
-            self._last_pan,
-            #self._last_tilt,
-            (math.sin(self._sim_step * math.pi * 0.2 * self.time_delta) + 1) * 0.5,
-            #(action[0] + 1)/2,
-            #(action[1] + 1)/2,
-            self._last_observed_ball_position[0]/self.field_size[0],   # Observed ball x
-            self._last_observed_ball_position[1]/self.field_size[1],   # Observed ball y
-            self._last_observed_ball_position_conf,   # Observed ball confidence
-        ], dtype=np.float32)
+        observation = []
+
+        # Base position
+        if self.observation_config["base_position"]:
+            observation += [
+                self.my_robot.get_2d_position()[0]/self.field_size[0], # Base footprint position x
+                self.my_robot.get_2d_position()[1]/self.field_size[1], # Base footprint position y
+            ]
+
+        # Base heading
+        if self.observation_config["base_heading"]:
+            observation += [
+                (math.sin(self.my_robot.get_heading()) + 1)/2,  # Base footprint heading part 1
+                (math.cos(self.my_robot.get_heading()) + 1)/2,  # Base footprint heading part 2
+            ]
+
+        # Camera position
+        if self.observation_config["camera_position"]:
+            observation += [
+                self.camera.get_2d_position()[0]/self.field_size[0], # Camera position x
+                self.camera.get_2d_position()[1]/self.field_size[1], # Camera position y
+            ]
+
+        # Neck state
+        if self.observation_config["neck_joint_position"]:
+            observation += [
+                self.camera.get_pan(normalize=True),  # Current Camera Pan
+                #self.camera.get_tilt(normalize=True),  # Current Camera Tilt
+            ]
+        if self.observation_config["neck_joint_position_history"]:
+            observation += [
+                self._last_pan,
+                #self._last_tilt,
+            ]
+
+        # Phase
+        if self.observation_config["sin_phase"]:
+            observation += [
+                (math.sin(self._sim_step * math.pi * 0.2 * self.time_delta) + 1) * 0.5,
+            ]
+
+        # Action history
+        if self.observation_config["action_history"]:
+            observation += [
+                (action[0] + 1)/2,
+                (action[1] + 1)/2,
+            ]
+
+        # Ball world model
+        if self.observation_config["estimated_ball_state"]:
+            observation += [
+                self._last_observed_ball_position[0]/self.field_size[0],   # Observed ball x
+                self._last_observed_ball_position[1]/self.field_size[1],   # Observed ball y
+                self._last_observed_ball_position_conf,   # Observed ball confidence
+            ]
 
         self._last_pan = self.camera.get_pan(normalize=True)  # Current Camera Pan
         self._last_tilt = self.camera.get_tilt(normalize=True)  # Current Camera Tilt
 
         self._sim_step += 1
 
-        return observation
+        return np.array(observation, dtype=np.float32)
 
     def render(self, mode='human'):
         # Create canvas
