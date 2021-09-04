@@ -14,7 +14,7 @@ class ball_position_gen(object):
                  velocity_to_ball_noise = 0.2,
                  ball_position_interval = (9.0, 6.0),
                  back_velocity = 1):
-      
+
         self._ball_position = np.array(ball_init_position)
         self._velocity = np.array(init_velocity)
         self._time_delta = time_delta
@@ -25,7 +25,7 @@ class ball_position_gen(object):
         self._velocity_to_ball_noise = velocity_to_ball_noise
         self._ball_position_interval = ball_position_interval
         self._back_velocity = back_velocity
- 
+
     def __iter__(self):
         return self
 
@@ -59,7 +59,7 @@ class ball_position_gen(object):
         self._ball_position += self._velocity * self._time_delta
 
     def _apply_friction(self):
-        self._velocity *= self._friction_factor 
+        self._velocity *= self._friction_factor
 
     def _ball_with_noise(self):
         return \
@@ -68,11 +68,3 @@ class ball_position_gen(object):
                 np.random.randn(2) * self._ball_noise * \
                 max(1, np.linalg.norm(self._velocity) * self._velocity_to_ball_noise),
                 np.array([0.0, 0.0]), np.array(self._ball_position_interval))
-
-"""
-positions = np.array(
-    list(
-        itertools.islice(
-            ball_position_gen(), 
-            3000)))
-"""
