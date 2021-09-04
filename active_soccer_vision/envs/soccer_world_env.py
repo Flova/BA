@@ -1,3 +1,5 @@
+import os
+import yaml
 import time
 import cv2
 import gym
@@ -8,21 +10,34 @@ from gym import spaces
 
 from active_soccer_vision.sim.sim import SoccerWorldSim
 
+__location__ = os.path.realpath(
+    os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+
 class SoccerWorldEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, config_file):
         super().__init__()
+
+        with open(os.path.join(__location__, '../config', config_file)) as f:
+            self.config = yaml.safe_load(f)
 
         self.action_space = spaces.Box(np.array([-1,-1]), np.array([1,1]), dtype=np.float32)
 
-        self.observation_space = spaces.Box(0, 1, (17,), dtype=np.float)
+        if not self.config['rl']['observation']['maps']['observation_maps']:
+            self.observation_space = spaces.Box(0, 1, (self.config['rl']['observation']['vec']['num'],), dtype=np.float32)
+        else:
+            self.observation_space = spaces.Dict({
+                "vec": spaces.Box(0, 1, (self.config['rl']['observation']['vec']['num'],), dtype=np.float32),
+                "map": spaces.Box(low=0, high=255, shape=(
+                    self.config['rl']['observation']['maps']['height'],
+                    self.config['rl']['observation']['maps']['width'], 1), dtype=np.uint8)
+            })
 
-        self._sim_length = 2000
+        self._sim_length = self.config['sim']['length']
 
-        self.sim = SoccerWorldSim(
-
-        )
+        self.sim = SoccerWorldSim(self.config)
 
         self.counter = 0
 
@@ -50,8 +65,17 @@ class SoccerWorldEnv(gym.Env):
 
     def reset(self):
         self.counter = 0
-        self.sim = SoccerWorldSim()
-        return np.zeros((17,), dtype=np.float32)
+        self.sim = SoccerWorldSim(self.config)
+
+        if not self.config['rl']['observation']['maps']['observation_maps']:
+            return np.zeros((self.config['rl']['observation']['vec']['num'],), dtype=np.float32)
+        else:
+            return {
+                "vec": np.zeros((self.config['rl']['observation']['vec']['num'],), dtype=np.float32),
+                "map": np.zeros((
+                    self.config['rl']['observation']['maps']['height'],
+                    self.config['rl']['observation']['maps']['width'], 1), dtype=np.uint8)
+            }
 
     def render(self, mode='human'):
         if self.counter != 0:

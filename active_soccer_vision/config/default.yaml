@@ -1,0 +1,30 @@
+
+sim:
+  field_size: [9, 6]
+  time_delta: 0.1
+  render_resolution: 80
+  length: 2000
+
+misc:
+  num_robots: 4
+
+rl:
+  observation:
+    vec:
+      num: 17
+      base_position: True
+      base_heading: False
+      camera_position: False
+      neck_joint_position: True
+      neck_joint_position_history: True
+      sin_phase: True
+      action_history: False
+      estimated_ball_state: True
+      estimated_robot_states: True
+    maps:
+      observation_maps: True
+      height: 9
+      width: 6
+      estimated_robot_states_map: True
+  action:
+    mode: "Velocity"  # Pattern, Velocity, Position

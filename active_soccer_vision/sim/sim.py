@@ -13,15 +13,17 @@ from active_soccer_vision.sim.camera import Camera
 
 class SoccerWorldSim:
 
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
 
-        self.render_resolution = 100
-        self.field_size = (9, 6)
+        self.config = config
 
-        self.time_delta = 1/10
+        self.render_resolution = self.config['sim']['render_resolution']
+        self.field_size = self.config['sim']['field_size']
 
-        self.num_robots = 4
+        self.time_delta = self.config['sim']['time_delta']
+
+        self.num_robots = self.config['misc']['num_robots']
 
         ball_position_generator = ball_position_gen(
             time_delta=self.time_delta,
@@ -48,27 +50,11 @@ class SoccerWorldSim:
         self.my_robot = self.robots[0]
         self.other_robots = self.robots[1:]
 
-        self.camera = Camera(fov=math.radians(45), width=1920, height=1080)
+        self.camera = Camera(fov=math.radians(45), width=1920, height=1080, robot=self.my_robot)
 
         self._last_pan = 0.5
         self._last_tilt = 0.5
         self._sim_step = 0
-
-        self.action_mode = "Velocity"  # Pattern, Velocity, Position
-
-        self.observation_config = {
-            "base_position": True,
-            "base_heading": False,
-            "camera_position": False,
-            "neck_joint_position": True,
-            "neck_joint_position_history": True,
-            "sin_phase": True,
-            "action_history": False,
-            "estimated_ball_state": True,
-            "estimated_robot_states": True,
-            "observation_maps": True,
-            "estimated_robot_states_map": True
-        }
 
     def step(self, action):
         # Scalse actions to 0-1
@@ -78,20 +64,17 @@ class SoccerWorldSim:
         self.ball.step()
         [bot.step() for bot in self.robots]
 
-        # Set new parent frame in camera
-        self.camera.set_parent_frame(self.my_robot.get_base_footprint())
-
-        if self.action_mode == "Pattern":
+        if self.config['rl']['action']['mode'] == "Pattern":
             self.camera.set_pan(
                 min(1,
                     max(0,
                         (math.sin(self._sim_step * math.pi * 0.5 * self.time_delta) + 1) * 0.5 * action[0] + (action[1] - 0.5))),
                 normalized=True)
             self.camera.set_tilt(0.3, normalized=True)
-        elif self.action_mode == "Position":
+        elif  self.config['rl']['action']['mode'] == "Position":
             self.camera.set_pan(action[0], normalized=True)
             self.camera.set_tilt(action[1], normalized=True)
-        elif self.action_mode == "Velocity":
+        elif  self.config['rl']['action']['mode'] == "Velocity":
             self.camera.set_pan(self.camera.get_pan(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
             self.camera.set_tilt(0.3) # self.camera.get_tilt(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
         else:
@@ -109,54 +92,56 @@ class SoccerWorldSim:
         # Build observation
         observation_vector = []
 
+        observation_vector_config = self.config['rl']['observation']['vec']
+
         # Base position
-        if self.observation_config["base_position"]:
+        if observation_vector_config["base_position"]:
             observation_vector += [
                 self.my_robot.get_2d_position()[0]/self.field_size[0], # Base footprint position x
                 self.my_robot.get_2d_position()[1]/self.field_size[1], # Base footprint position y
             ]
 
         # Base heading
-        if self.observation_config["base_heading"]:
+        if observation_vector_config["base_heading"]:
             observation_vector += [
                 (math.sin(self.my_robot.get_heading()) + 1)/2,  # Base footprint heading part 1
                 (math.cos(self.my_robot.get_heading()) + 1)/2,  # Base footprint heading part 2
             ]
 
         # Camera position
-        if self.observation_config["camera_position"]:
+        if observation_vector_config["camera_position"]:
             observation_vector += [
                 self.camera.get_2d_position()[0]/self.field_size[0], # Camera position x
                 self.camera.get_2d_position()[1]/self.field_size[1], # Camera position y
             ]
 
         # Neck state
-        if self.observation_config["neck_joint_position"]:
+        if observation_vector_config["neck_joint_position"]:
             observation_vector += [
                 self.camera.get_pan(normalize=True),  # Current Camera Pan
                 #self.camera.get_tilt(normalize=True),  # Current Camera Tilt
             ]
-        if self.observation_config["neck_joint_position_history"]:
+        if observation_vector_config["neck_joint_position_history"]:
             observation_vector += [
                 self._last_pan,
                 #self._last_tilt,
             ]
 
         # Phase
-        if self.observation_config["sin_phase"]:
+        if observation_vector_config["sin_phase"]:
             observation_vector += [
                 (math.sin(self._sim_step * math.pi * 0.2 * self.time_delta) + 1) * 0.5,
             ]
 
         # Action history
-        if self.observation_config["action_history"]:
+        if observation_vector_config["action_history"]:
             observation_vector += [
                 (action[0] + 1)/2,
                 (action[1] + 1)/2,
             ]
 
         # Ball world model
-        if self.observation_config["estimated_ball_state"]:
+        if observation_vector_config["estimated_ball_state"]:
             observation_vector += [
                 self.ball.get_last_observed_2d_position()[0][0]/self.field_size[0],   # Observed ball x
                 self.ball.get_last_observed_2d_position()[0][1]/self.field_size[1],   # Observed ball y
@@ -164,7 +149,7 @@ class SoccerWorldSim:
             ]
 
         # Robots world model
-        if self.observation_config["estimated_robot_states"]:
+        if observation_vector_config["estimated_robot_states"]:
             for robot in self.other_robots:
                 observation_vector += [
                     robot.get_last_observed_2d_position()[0][0]/self.field_size[0], # Observed x
@@ -174,17 +159,19 @@ class SoccerWorldSim:
 
         # Render observation maps if necessary
         observation_maps = None
-        if self.observation_config["observation_maps"]:
-            observation_maps = np.array((self.field_size[0], self.field_size[1], 1), dtype=np.float32)
-
+        observation_map_config = self.config['rl']['observation']['maps']
+        if observation_map_config["observation_maps"]:
+            observation_maps = np.zeros((self.field_size[0], self.field_size[1], 1), dtype=np.uint8)
             # Robots world model for the map
-            if self.observation_config["estimated_robot_states_map"]:
+            if observation_map_config["estimated_robot_states_map"]:
                 for robot in self.other_robots:
-                    # Draw robot on map
-                    observation_maps[
-                            robot.get_last_observed_2d_position()[0][0],
-                            robot.get_last_observed_2d_position()[0][0],
-                        ] = robot.get_last_observed_2d_position()[1]
+                    # Draw robot on map if the cell is not occupied by a
+                    idx =(  int(min(self.field_size[0] - 1, robot.get_last_observed_2d_position()[0][0])),
+                            int(min(self.field_size[1] - 1, robot.get_last_observed_2d_position()[0][1])))
+                    if robot.get_last_observed_2d_position()[1] * 254 + 1 > observation_maps[idx]:
+                        observation_maps[idx] = robot.get_last_observed_2d_position()[1] * 254 + 1
+
+        #cv2.imshow("map", cv2.resize(cv2.flip(cv2.rotate(observation_maps, cv2.ROTATE_90_CLOCKWISE), 1), (909, 600)))
 
         self._last_pan = self.camera.get_pan(normalize=True)  # Current Camera Pan
         self._last_tilt = self.camera.get_tilt(normalize=True)  # Current Camera Tilt
@@ -192,13 +179,13 @@ class SoccerWorldSim:
         self._sim_step += 1
 
         # Check if we have observation maps
-        if observation_maps:
+        if observation_maps is None:
+            return np.array(observation_vector, dtype=np.float32)
+        else:
             return {
                 "vec": np.array(observation_vector, dtype=np.float32),
                 "map": observation_maps,
             }
-        else:
-            return np.array(observation_vector, dtype=np.float32)
 
     def render(self, mode='human'):
         # Create canvas
