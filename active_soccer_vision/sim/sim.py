@@ -7,7 +7,7 @@ import numpy as np
 from gym import spaces
 from scipy.stats import multivariate_normal
 
-from active_soccer_vision.sim.ball import ball_position_gen
+from active_soccer_vision.sim.ball import ball_position_gen, Ball
 from active_soccer_vision.sim.robot import robot_position_gen, robot_orientation_gen, Robot
 from active_soccer_vision.sim.camera import Camera
 
@@ -21,16 +21,15 @@ class SoccerWorldSim:
 
         self.time_delta = 1/10
 
-        self.num_robots = 8
+        self.num_robots = 4
 
-        self.ball_position_generator = ball_position_gen(
+        ball_position_generator = ball_position_gen(
             time_delta=self.time_delta,
             ball_init_position=(
                 random.uniform(0, self.field_size[0]),
                 random.uniform(1, self.field_size[1])))
 
-        self._last_observed_ball_position = np.array([self.field_size[0]/2, self.field_size[1]/2])
-        self._last_observed_ball_position_conf = 0.0
+        self.ball = Ball(ball_position_generator, self.time_delta)
 
         self.robots = []
         for i in range(self.num_robots):
@@ -44,9 +43,10 @@ class SoccerWorldSim:
                 time_delta=self.time_delta,
             )
 
-            self.robots.append(Robot(robot_position_generator, robot_orientation_generator))
+            self.robots.append(Robot(robot_position_generator, robot_orientation_generator, self.time_delta))
 
         self.my_robot = self.robots[0]
+        self.other_robots = self.robots[1:]
 
         self.camera = Camera(fov=math.radians(45), width=1920, height=1080)
 
@@ -65,6 +65,7 @@ class SoccerWorldSim:
             "sin_phase": True,
             "action_history": False,
             "estimated_ball_state": True,
+            "estimated_robot_states": True,
         }
 
     def step(self, action):
@@ -73,11 +74,10 @@ class SoccerWorldSim:
         action = (action + 1) / 2
 
         # Generate ball and robot pose
-        self.ball_position, _ = self.ball_position_generator.__next__()
-
-        # Step the robot generators
+        self.ball.step()
         [bot.step() for bot in self.robots]
 
+        # Set new parent frame in camera
         self.camera.set_parent_frame(self.my_robot.get_base_footprint())
 
         if self.action_mode == "Pattern":
@@ -96,13 +96,14 @@ class SoccerWorldSim:
         else:
             print("Unknown action mode")
 
-        # Drop ball confidence
-        self._last_observed_ball_position_conf = max(self._last_observed_ball_position_conf - 0.1 * self.time_delta, 0.0)
+        # Check if we are ably to observe the Ball
+        if self.camera.check_if_point_is_visible(self.ball.get_2d_position()):
+            self.ball.observe()
 
-        # Calculate reward and ball observation
-        if self.camera.check_if_point_is_visible(self.ball_position):
-            self._last_observed_ball_position = self.ball_position
-            self._last_observed_ball_position_conf = 1.0
+        # Check if we are ably to observe any robots
+        for robot in self.other_robots:
+            if self.camera.check_if_point_is_visible(robot.get_2d_position()):
+                robot.observe()
 
         # Build observation
         observation = []
@@ -156,10 +157,19 @@ class SoccerWorldSim:
         # Ball world model
         if self.observation_config["estimated_ball_state"]:
             observation += [
-                self._last_observed_ball_position[0]/self.field_size[0],   # Observed ball x
-                self._last_observed_ball_position[1]/self.field_size[1],   # Observed ball y
-                self._last_observed_ball_position_conf,   # Observed ball confidence
+                self.ball.get_last_observed_2d_position()[0][0]/self.field_size[0],   # Observed ball x
+                self.ball.get_last_observed_2d_position()[0][1]/self.field_size[1],   # Observed ball y
+                self.ball.get_last_observed_2d_position()[1],   # Observed ball confidence
             ]
+
+        # Robots world model
+        if self.observation_config["estimated_robot_states"]:
+            for robot in self.other_robots:
+                observation += [
+                    robot.get_last_observed_2d_position()[0][0]/self.field_size[0], # Observed x
+                    robot.get_last_observed_2d_position()[0][1]/self.field_size[1], # Observed x
+                    robot.get_last_observed_2d_position()[1],  # Confidence
+                ]
 
         self._last_pan = self.camera.get_pan(normalize=True)  # Current Camera Pan
         self._last_tilt = self.camera.get_tilt(normalize=True)  # Current Camera Tilt
@@ -213,9 +223,9 @@ class SoccerWorldSim:
                         cv2.circle(canvas, tuple([int(e * self.resolution) for e in ball_position]), 5, (0,0,255), -1)
 
         # Check if the ball is visable
-        if self.camera.check_if_point_is_visible(self.ball_position):
-            cv2.circle(canvas, tuple([int(e * self.resolution) for e in self.ball_position]), 10, (0,255,0), -1)
+        if self.camera.check_if_point_is_visible(self.ball.get_2d_position()):
+            cv2.circle(canvas, tuple([int(e * self.resolution) for e in self.ball.get_2d_position()]), 10, (0,255,0), -1)
         else:
-            cv2.circle(canvas, tuple([int(e * self.resolution) for e in self.ball_position]), 10, (0,0,255), -1)
+            cv2.circle(canvas, tuple([int(e * self.resolution) for e in self.ball.get_2d_position()]), 10, (0,0,255), -1)
 
         return canvas

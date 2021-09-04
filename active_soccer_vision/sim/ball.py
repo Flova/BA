@@ -68,3 +68,26 @@ class ball_position_gen(object):
                 np.random.randn(2) * self._ball_noise * \
                 max(1, np.linalg.norm(self._velocity) * self._velocity_to_ball_noise),
                 np.array([0.0, 0.0]), np.array(self._ball_position_interval))
+
+
+class Ball:
+    def __init__(self, position_generator, time_delta):
+        self.position_generator = position_generator
+        self.time_delta = time_delta
+        self.position = np.array([0, 0])
+        self.last_observed_position = np.array([0, 0])
+        self.conf = 0
+
+    def step(self):
+        self.position, _ = self.position_generator.__next__()
+        self.conf = max(self.conf - 0.1 * self.time_delta, 0.0)
+
+    def get_2d_position(self):
+        return self.position
+
+    def observe(self):
+        self.last_observed_position = self.get_2d_position()
+        self.conf = 1.0
+
+    def get_last_observed_2d_position(self):
+        return self.last_observed_position, self.conf

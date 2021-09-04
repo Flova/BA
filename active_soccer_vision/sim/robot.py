@@ -96,16 +96,21 @@ class robot_orientation_gen(object):
         return pos
 
 class Robot:
-    def __init__(self, position_generator, orientation_generator):
+    def __init__(self, position_generator, orientation_generator, time_delta):
         self.position_generator = position_generator
         self.orientation_generator = orientation_generator
+        self.time_delta = time_delta
         self.position = None
         self.orientation = None
         self.base_footprint = None
+        self.last_observed_position = np.array([0, 0])
+        self.last_observed_heading = 0
+        self.conf = 0
 
     def step(self):
         self.orientation, _ = self.orientation_generator.__next__()
         self.position, _ = self.position_generator.__next__()
+        self.conf = max(self.conf - 0.1 * self.time_delta, 0.0)
 
     def get_base_footprint(self):
         return transforms3d.affines.compose(
@@ -123,3 +128,14 @@ class Robot:
 
     def get_2d_position(self):
         return self.position
+
+    def observe(self):
+        self.last_observed_position = self.get_2d_position()
+        self.last_observed_heading = self.get_heading()
+        self.conf = 1
+
+    def get_last_observed_2d_position(self):
+        return self.last_observed_position, self.conf
+
+    def get_last_observed_heading(self):
+        return self.last_observed_heading, self.conf
