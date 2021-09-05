@@ -6,7 +6,14 @@ import transforms3d
 from active_soccer_vision.sim.utils import multiply_list
 
 class Camera:
-    def __init__(self, fov=math.radians(45), height=1080, width=1920, pan_limits=[math.radians(-90),math.radians(90)], tilt_limits=[0,math.radians(60)], robot=None):
+    def __init__(
+            self,
+            fov=math.radians(45),
+            height=1080,
+            width=1920,
+            pan_limits=[math.radians(-90),math.radians(90)],
+            tilt_limits=[0,math.radians(60)],
+            robot=None):
         self.fov = fov
         self.height = height
         self.width = width
