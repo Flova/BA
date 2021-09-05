@@ -31,8 +31,8 @@ class SoccerWorldEnv(gym.Env):
             self.observation_space = spaces.Dict({
                 "vec": spaces.Box(0, 1, (self.config['rl']['observation']['vec']['num'],), dtype=np.float32),
                 "map": spaces.Box(low=0, high=255, shape=(
-                    self.config['sim']['field_size'][0],
-                    self.config['sim']['field_size'][1], 1), dtype=np.uint8)
+                    self.config['sim']['field_size'][1] * self.config['rl']['observation']['maps']['resolution'],
+                    self.config['sim']['field_size'][0] * self.config['rl']['observation']['maps']['resolution'], 3), dtype=np.uint8)
             })
 
         self._sim_length = self.config['sim']['length']
@@ -73,8 +73,8 @@ class SoccerWorldEnv(gym.Env):
             return {
                 "vec": np.zeros((self.config['rl']['observation']['vec']['num'],), dtype=np.float32),
                 "map": np.zeros((
-                    self.config['sim']['field_size'][0],
-                    self.config['sim']['field_size'][1], 1), dtype=np.uint8)
+                    self.config['sim']['field_size'][1] * self.config['rl']['observation']['maps']['resolution'],
+                    self.config['sim']['field_size'][0] * self.config['rl']['observation']['maps']['resolution'], 3), dtype=np.uint8)
             }
 
     def render(self, mode='human'):

@@ -50,7 +50,12 @@ class SoccerWorldSim:
         self.my_robot = self.robots[0]
         self.other_robots = self.robots[1:]
 
-        self.camera = Camera(fov=math.radians(45), width=1920, height=1080, robot=self.my_robot)
+        self.camera = Camera(fov=math.radians(70), width=1920, height=1080, robot=self.my_robot)
+
+        # History which saves how much each field cell is viewed
+        self.view_history = np.zeros((
+            self.field_size[1] * self.config['rl']['observation']['maps']['resolution'],
+            self.field_size[0] * self.config['rl']['observation']['maps']['resolution'], 1), dtype=np.uint8)
 
         self._last_pan = 0.5
         self._last_tilt = 0.5
@@ -76,7 +81,7 @@ class SoccerWorldSim:
             self.camera.set_tilt(action[1], normalized=True)
         elif  self.config['rl']['action']['mode'] == "Velocity":
             self.camera.set_pan(self.camera.get_pan(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
-            self.camera.set_tilt(0.3) # self.camera.get_tilt(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
+            self.camera.set_tilt(self.camera.get_tilt(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
         else:
             print("Unknown action mode")
 
@@ -161,17 +166,31 @@ class SoccerWorldSim:
         observation_maps = None
         observation_map_config = self.config['rl']['observation']['maps']
         if observation_map_config["observation_maps"]:
-            observation_maps = np.zeros((self.field_size[0], self.field_size[1], 1), dtype=np.uint8)
+            observation_maps = np.zeros((
+                self.field_size[1] * observation_map_config["resolution"],
+                self.field_size[0] * observation_map_config["resolution"], 1), dtype=np.uint8)
             # Robots world model for the map
             if observation_map_config["estimated_robot_states_map"]:
                 for robot in self.other_robots:
                     # Draw robot on map if the cell is not occupied by a
-                    idx =(  int(min(self.field_size[0] - 1, robot.get_last_observed_2d_position()[0][0])),
-                            int(min(self.field_size[1] - 1, robot.get_last_observed_2d_position()[0][1])))
+                    idx =(  int(min(self.field_size[1] - 1, robot.get_last_observed_2d_position()[0][1]) * observation_map_config["resolution"]),
+                            int(min(self.field_size[0] - 1, robot.get_last_observed_2d_position()[0][0]) * observation_map_config["resolution"]))
                     if robot.get_last_observed_2d_position()[1] * 254 + 1 > observation_maps[idx]:
                         observation_maps[idx] = robot.get_last_observed_2d_position()[1] * 254 + 1
 
-        #cv2.imshow("map", cv2.resize(cv2.flip(cv2.rotate(observation_maps, cv2.ROTATE_90_CLOCKWISE), 1), (909, 600)))
+            if observation_map_config["view_history_map"]:
+                # Decay older history
+                self.view_history = (self.view_history * observation_map_config["view_history_map_decay"]).astype(np.uint8)
+                # Get corners of projected fov
+                corners = (self.camera.get_projected_image_corners() * observation_map_config['resolution']).astype(np.int32)
+                # Draw polygon of visible area
+                cv2.fillPoly(self.view_history,[corners.reshape((-1,1,2))],(255,))
+
+               #cv2.imshow("hist", self.view_history)
+
+        observation_maps = np.dstack((self.view_history, np.zeros_like(self.view_history), observation_maps))
+
+        #cv2.imshow("map", cv2.resize(observation_maps, (900, 600)))
 
         self._last_pan = self.camera.get_pan(normalize=True)  # Current Camera Pan
         self._last_tilt = self.camera.get_tilt(normalize=True)  # Current Camera Tilt

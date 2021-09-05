@@ -23,6 +23,10 @@ rl:
       estimated_robot_states: True
     maps:
       observation_maps: True
+      resolution: 10
       estimated_robot_states_map: True
+      view_history_map: True
+      view_history_map_decay: 0.99
+
   action:
-    mode: "Velocity"  # Pattern, Velocity, Position
+    mode: "Position"  # Pattern, Velocity, Position
