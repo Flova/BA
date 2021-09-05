@@ -4,15 +4,14 @@ import numpy as np
 
 class ball_position_gen(object):
     def __init__(self,
+                 time_delta = 0.1,
+                 ball_position_interval = (9.0, 6.0),
                  ball_init_position=(0.0, 0.0),
                  init_velocity=(0.0, 0.0),
-                 time_delta = 0.1,
                  friction_factor = 0.8,
                  kick_intensity = 5.0,
                  kick_prop = 0.005,
                  ball_noise = 0.1,
-                 velocity_to_ball_noise = 0.2,
-                 ball_position_interval = (9.0, 6.0),
                  back_velocity = 1):
 
         self._ball_position = np.array(ball_init_position)
@@ -22,7 +21,6 @@ class ball_position_gen(object):
         self._kick_intensity = kick_intensity
         self._kick_prop = kick_prop
         self._ball_noise = ball_noise
-        self._velocity_to_ball_noise = velocity_to_ball_noise
         self._ball_position_interval = ball_position_interval
         self._back_velocity = back_velocity
 
@@ -65,8 +63,7 @@ class ball_position_gen(object):
         return \
             np.clip(
                 self._ball_position + \
-                np.random.randn(2) * self._ball_noise * \
-                max(1, np.linalg.norm(self._velocity) * self._velocity_to_ball_noise),
+                np.random.randn(2) * self._ball_noise,
                 np.array([0.0, 0.0]), np.array(self._ball_position_interval))
 
 

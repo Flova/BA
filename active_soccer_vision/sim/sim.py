@@ -29,7 +29,11 @@ class SoccerWorldSim:
             time_delta=self.time_delta,
             ball_init_position=(
                 random.uniform(0, self.field_size[0]),
-                random.uniform(1, self.field_size[1])))
+                random.uniform(1, self.field_size[1])),
+            ball_position_interval=(
+                self.field_size[0],
+                self.field_size[1]),
+            **self.config['ball']['gen'])
 
         self.ball = Ball(ball_position_generator, self.time_delta)
 
@@ -39,11 +43,15 @@ class SoccerWorldSim:
                 time_delta=self.time_delta,
                 robot_init_position=(
                     random.uniform(0, self.field_size[0]),
-                    random.uniform(1, self.field_size[1])))
+                    random.uniform(1, self.field_size[1])),
+                robot_position_interval=(
+                    self.field_size[0],
+                    self.field_size[1]),
+                **self.config['robot']['gen']['position'])
 
             robot_orientation_generator = robot_orientation_gen(
                 time_delta=self.time_delta,
-            )
+                **self.config['robot']['gen']['orientation']) # TODO random init
 
             self.robots.append(Robot(robot_position_generator, robot_orientation_generator, self.time_delta))
 

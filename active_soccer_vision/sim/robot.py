@@ -5,30 +5,33 @@ import transforms3d
 
 class robot_position_gen(object):
     def __init__(self,
+                 time_delta = 0.1,
+                 robot_position_interval = (9.0, 6.0),
                  robot_init_position=(0.0, 0.0),
                  init_velocity=(-0.1, -0.1),
                  walk_speed_factor=0.5,
-                 time_delta = 0.1,
-                 robot_noise = 0.05,
-                 velocity_to_robot_noise = 0.2,
-                 robot_position_interval = (9.0, 6.0),
+                 noise = 0.05,
+                 walk_prop = 0.1,
+                 stop_prop = 0.01,
                  back_velocity = 1):
 
         self._robot_position = np.array(robot_init_position)
         self._velocity = np.array(init_velocity)
         self._time_delta = time_delta
-        self._robot_noise = robot_noise
+        self._robot_noise = noise
         self._walk_speed_factor = walk_speed_factor
-        self._velocity_to_robot_noise = velocity_to_robot_noise
         self._robot_position_interval = robot_position_interval
         self._back_velocity = back_velocity
+        self._walk_prop = walk_prop
+        self._stop_prop = stop_prop
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if random.randrange(0, 100) / 100 < 0.1: self.walk()
-        if random.randrange(0, 100) / 100 < 0.01: self._velocity = np.array([0.0, 0.0])
+        if random.randrange(0, 100) / 100 < self._walk_prop: self.walk()
+        if random.randrange(0, 100) / 100 < self._stop_prop:
+            self._velocity = np.array([0.0, 0.0])
         self._apply_velocity()
         self.push_in_field()
         return self._robot_with_noise() , self._robot_position
@@ -57,17 +60,18 @@ class robot_position_gen(object):
         return \
             np.clip(
                 self._robot_position + \
-                np.random.randn(2) * self._robot_noise * \
-                max(1, np.linalg.norm(self._velocity) * self._velocity_to_robot_noise),
+                np.random.randn(2) * self._robot_noise,
                 np.array([0.0, 0.0]), np.array(self._robot_position_interval))
 
 
 class robot_orientation_gen(object):
     def __init__(self,
+                 time_delta = 0.1,
                  robot_init_orientation=(0.0, 0.0, 0.0),
                  init_velocity=(-0.0, -0.0, 0.0),
                  turn_speed_factor=1,
-                 time_delta = 0.1,
+                 turn_prop = 0.1,
+                 stop_prop = 0.01,
                  noise = 0.0000001):
 
         self._robot_orientation = np.array(robot_init_orientation)
@@ -75,13 +79,16 @@ class robot_orientation_gen(object):
         self._time_delta = time_delta
         self._noise = noise
         self._turn_speed_factor = turn_speed_factor
+        self._turn_prop = turn_prop
+        self._stop_prop = stop_prop
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if random.randrange(0, 100) / 100 < 0.1: self.turn()
-        if random.randrange(0, 100) / 100 < 0.01: self._velocity = np.array([0.0, 0.0, 0.0])
+        if random.randrange(0, 100) / 100 < self._turn_prop: self.turn()
+        if random.randrange(0, 100) / 100 < self._stop_prop:
+            self._velocity = np.array([0.0, 0.0, 0.0])
         self._apply_velocity()
         return self._robot_orientation_with_noise(), self._robot_orientation
 

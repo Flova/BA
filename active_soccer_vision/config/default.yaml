@@ -8,6 +8,27 @@ sim:
 misc:
   num_robots: 4
 
+ball:
+  gen:
+    friction_factor: 0.8
+    kick_intensity: 5.0
+    kick_prop: 0.005
+    ball_noise: 0.1
+
+robot:
+  gen:
+    position:
+      walk_speed_factor: 0.5
+      noise: 0.02
+      walk_prop: 0.1
+      stop_prop: 0.01
+    orientation:
+      turn_speed_factor: 1
+      noise: 0.0
+      turn_prop: 0.1
+      stop_prop: 0.01
+
+
 rl:
   observation:
     vec:
