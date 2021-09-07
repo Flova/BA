@@ -48,6 +48,15 @@ rl:
       estimated_robot_states_map: True
       view_history_map: True
       view_history_map_decay: 0.99
-
   action:
     mode: "Position"  # Pattern, Velocity, Position
+  reward:
+    base: 1
+    ball_visibility: 1
+    robot_visibility: 1
+    sin_demonstration_mse: -1
+    ball_confidence: 0
+    robot_confidence: 0
+    field_coverage_mean: 0
+    field_coverage_std: 0
+

@@ -55,12 +55,25 @@ class SoccerWorldEnv(gym.Env):
 
     def _get_reward(self):
         # Calculate reward
-        reward = 1
+        reward = self.config['rl']['reward']['base']
         # Reward for visibility
         if self.sim.camera.check_if_point_is_visible(self.sim.ball.get_2d_position()):
-            reward += 2
-        # Reward for looking around
-        reward -= (self.sim.camera.get_pan(normalize=True) - (math.sin(self.sim._sim_step * math.pi * 0.2 * self.sim.time_delta) + 1) * 0.5 ) ** 2
+            reward += self.config['rl']['reward']['ball_visibility']
+        for robot in self.sim.other_robots:
+            if self.sim.camera.check_if_point_is_visible(robot.get_2d_position()):
+                reward += self.config['rl']['reward']['robot_visibility'] / len(self.sim.other_robots)
+        # Reward based on the world model confidence
+        reward += self.config['rl']['reward']['ball_confidence'] * self.sim.ball.get_last_observed_2d_position()[1]
+        for robot in self.sim.other_robots:
+            reward += self.config['rl']['reward']['robot_confidence'] * robot.get_last_observed_2d_position()[1] / len(self.sim.other_robots)
+        # Reward based on the field coverage
+        if self.config['rl']['reward']['field_coverage_mean'] != 0:
+            reward += self.config['rl']['reward']['field_coverage_mean'] * float(self.sim.view_history.mean()) / 255
+        if self.config['rl']['reward']['field_coverage_std'] != 0:
+            reward += self.config['rl']['reward']['field_coverage_std'] * float(self.sim.view_history.std()) / 255
+        # Reward for looking around demonstration
+        reward += self.config['rl']['reward']['sin_demonstration_mse'] * \
+            (self.sim.camera.get_pan(normalize=True) - (math.sin(self.sim._sim_step * math.pi * 0.2 * self.sim.time_delta) + 1) * 0.5 ) ** 2
         return reward
 
     def reset(self):
