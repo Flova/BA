@@ -170,9 +170,20 @@ class SoccerWorldSim:
                     robot.get_last_observed_2d_position()[1],  # Confidence
                 ]
 
-        # Render observation maps if necessary
+        # Render observation maps
         observation_maps = None
         observation_map_config = self.config['rl']['observation']['maps']
+
+        # Calculate view history no matter if it is used or not in the observation
+        # Decay older history
+        self.view_history = (self.view_history * observation_map_config["view_history_map_decay"]).astype(np.uint8)
+        # Get corners of projected fov
+        corners = (self.camera.get_projected_image_corners() * observation_map_config['resolution']).astype(np.int32)
+        # Draw polygon of visible area
+        cv2.fillPoly(self.view_history,[corners.reshape((-1,1,2))],(255,))
+        #cv2.imshow("hist", self.view_history)
+
+        # Render the other maps if necessary
         if observation_map_config["observation_maps"]:
             observation_maps = np.zeros((
                 self.field_size[1] * observation_map_config["resolution"],
@@ -185,20 +196,10 @@ class SoccerWorldSim:
                             int(min(self.field_size[0] - 1, robot.get_last_observed_2d_position()[0][0]) * observation_map_config["resolution"]))
                     if robot.get_last_observed_2d_position()[1] * 254 + 1 > observation_maps[idx]:
                         observation_maps[idx] = robot.get_last_observed_2d_position()[1] * 254 + 1
-
+            # Include view history if wanted
             if observation_map_config["view_history_map"]:
-                # Decay older history
-                self.view_history = (self.view_history * observation_map_config["view_history_map_decay"]).astype(np.uint8)
-                # Get corners of projected fov
-                corners = (self.camera.get_projected_image_corners() * observation_map_config['resolution']).astype(np.int32)
-                # Draw polygon of visible area
-                cv2.fillPoly(self.view_history,[corners.reshape((-1,1,2))],(255,))
-
-               #cv2.imshow("hist", self.view_history)
-
-        observation_maps = np.dstack((self.view_history, np.zeros_like(self.view_history), observation_maps))
-
-        #cv2.imshow("map", cv2.resize(observation_maps, (900, 600)))
+                observation_maps = np.dstack((self.view_history, observation_maps))
+                #cv2.imshow("map", cv2.resize(np.dstack((np.zeros_like(self.view_history), observation_maps)), (900, 600)))
 
         self._last_pan = self.camera.get_pan(normalize=True)  # Current Camera Pan
         self._last_tilt = self.camera.get_tilt(normalize=True)  # Current Camera Tilt
