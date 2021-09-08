@@ -32,18 +32,18 @@ robot:
 rl:
   observation:
     vec:
-      num: 17
+      num: 9
       base_position: True
-      base_heading: False
+      base_heading: True
       camera_position: False
       neck_joint_position: True
-      neck_joint_position_history: True
+      neck_joint_position_history: False
       sin_phase: True
       action_history: False
       estimated_ball_state: True
-      estimated_robot_states: True
+      estimated_robot_states: False
     maps:
-      observation_maps: True
+      observation_maps: False
       resolution: 10
       estimated_robot_states_map: True
       view_history_map: True
