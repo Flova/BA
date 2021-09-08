@@ -213,7 +213,7 @@ class SoccerWorldSim:
         else:
             return {
                 "vec": np.array(observation_vector, dtype=np.float32),
-                "map": observation_maps,
+                "map": observation_maps.transpose(2, 0, 1),
             }
 
     def render(self):
