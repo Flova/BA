@@ -4,17 +4,16 @@ import numpy as np
 
 class ball_position_gen(object):
     def __init__(self,
+                 time_delta = 0.1,
+                 ball_position_interval = (9.0, 6.0),
                  ball_init_position=(0.0, 0.0),
                  init_velocity=(0.0, 0.0),
-                 time_delta = 0.1,
                  friction_factor = 0.8,
                  kick_intensity = 5.0,
                  kick_prop = 0.005,
                  ball_noise = 0.1,
-                 velocity_to_ball_noise = 0.2,
-                 ball_position_interval = (9.0, 6.0),
                  back_velocity = 1):
-      
+
         self._ball_position = np.array(ball_init_position)
         self._velocity = np.array(init_velocity)
         self._time_delta = time_delta
@@ -22,10 +21,9 @@ class ball_position_gen(object):
         self._kick_intensity = kick_intensity
         self._kick_prop = kick_prop
         self._ball_noise = ball_noise
-        self._velocity_to_ball_noise = velocity_to_ball_noise
         self._ball_position_interval = ball_position_interval
         self._back_velocity = back_velocity
- 
+
     def __iter__(self):
         return self
 
@@ -59,20 +57,34 @@ class ball_position_gen(object):
         self._ball_position += self._velocity * self._time_delta
 
     def _apply_friction(self):
-        self._velocity *= self._friction_factor 
+        self._velocity *= self._friction_factor
 
     def _ball_with_noise(self):
         return \
             np.clip(
                 self._ball_position + \
-                np.random.randn(2) * self._ball_noise * \
-                max(1, np.linalg.norm(self._velocity) * self._velocity_to_ball_noise),
+                np.random.randn(2) * self._ball_noise,
                 np.array([0.0, 0.0]), np.array(self._ball_position_interval))
 
-"""
-positions = np.array(
-    list(
-        itertools.islice(
-            ball_position_gen(), 
-            3000)))
-"""
+
+class Ball:
+    def __init__(self, position_generator, time_delta):
+        self.position_generator = position_generator
+        self.time_delta = time_delta
+        self.position = np.array([0, 0])
+        self.last_observed_position = np.array([0, 0])
+        self.conf = 0
+
+    def step(self):
+        self.position, _ = self.position_generator.__next__()
+        self.conf = max(self.conf - 0.1 * self.time_delta, 0.0)
+
+    def get_2d_position(self):
+        return self.position
+
+    def observe(self):
+        self.last_observed_position = self.get_2d_position()
+        self.conf = 1.0
+
+    def get_last_observed_2d_position(self):
+        return self.last_observed_position, self.conf
