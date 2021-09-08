@@ -216,7 +216,7 @@ class SoccerWorldSim:
                 "map": observation_maps,
             }
 
-    def render(self, mode='human'):
+    def render(self):
         # Create canvas
         canvas = np.zeros((self.render_resolution * self.field_size[1], self.render_resolution * self.field_size[0], 3), dtype=np.uint8)
 
