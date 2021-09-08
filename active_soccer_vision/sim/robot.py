@@ -7,7 +7,7 @@ class robot_position_gen(object):
     def __init__(self,
                  robot_init_position=(0.0, 0.0),
                  init_velocity=(-0.1, -0.1),
-                 walk_speed_factor=0.5,
+                 walk_speed_factor=0.1,
                  time_delta = 0.1,
                  robot_noise = 0.05,
                  velocity_to_robot_noise = 0.2,
@@ -66,7 +66,7 @@ class robot_orientation_gen(object):
     def __init__(self,
                  robot_init_orientation=(0.0, 0.0, 0.0),
                  init_velocity=(-0.0, -0.0, 0.0),
-                 turn_speed_factor=1,
+                 turn_speed_factor=0.2,
                  time_delta = 0.1,
                  noise = 0.0000001):
       
@@ -83,7 +83,7 @@ class robot_orientation_gen(object):
         if random.randrange(0, 100) / 100 < 0.1: self.turn()
         if random.randrange(0, 100) / 100 < 0.01: self._velocity = np.array([0.0, 0.0, 0.0])
         self._apply_velocity()
-        return np.array([0,0,0.0]), None#self._robot_orientation_with_noise(), None
+        return self._robot_orientation_with_noise(), None
 
     def _apply_velocity(self):
         self._robot_orientation += self._velocity * self._time_delta
