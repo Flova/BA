@@ -96,9 +96,10 @@ class SoccerWorldEnv(gym.Env):
 
             time.sleep(self.sim.time_delta)
 
-            # SHow the image
-            cv2.imshow("Top Down Viz", viz)
-            cv2.waitKey(1)
+            if mode == "human":
+                # Show the image
+                cv2.imshow("Top Down Viz", viz)
+                cv2.waitKey(1)
 
             return viz
 
