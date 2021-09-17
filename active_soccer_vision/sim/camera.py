@@ -172,4 +172,15 @@ class Camera:
         R = transforms3d.euler.euler2mat(r,tilt,y)
         self.camera_frame = transforms3d.affines.compose(L, R, np.ones(3))
 
+    def look_at(self, x_position, y_position):
+        point = np.array([x_position, y_position, 0])
+        R_point_on_map = transforms3d.euler.euler2mat(0.0, 0, 0)
+        A_point_on_map = transforms3d.affines.compose(point, R_point_on_map, np.ones(3))
+        A_ball_in_cam_optical_frame = self.get_point_in_camera_optical_frame(A_point_on_map)
+        p, _, _, _ = transforms3d.affines.decompose(A_ball_in_cam_optical_frame)
+        alpha = math.atan2(p[0], p[2])
+        beta = math.atan2(p[1], math.sqrt(p[0]**2 + p[2]**2))
+        self.set_tilt(self.get_tilt() + beta)
+        self.set_pan((self.get_pan() - alpha + math.pi) % math.tau - math.pi)
+
 
