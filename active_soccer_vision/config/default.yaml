@@ -50,7 +50,7 @@ rl:
       view_history_map: True
       view_history_map_decay: 0.99
   action:
-    mode: "Position"  # Pattern, Velocity, Position
+    mode: "Absolute"  # Pattern, Velocity, Position, Absolute
   reward:
     base: 1
     ball_visibility: 1

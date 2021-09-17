@@ -90,12 +90,14 @@ class SoccerWorldSim:
                         (math.sin(self._sim_step * math.pi * 0.5 * self.time_delta) + 1) * 0.5 * action[0] + (action[1] - 0.5))),
                 normalized=True)
             self.camera.set_tilt(0.3, normalized=True)
-        elif  self.config['rl']['action']['mode'] == "Position":
+        elif self.config['rl']['action']['mode'] == "Position":
             self.camera.set_pan(action[0], normalized=True)
             self.camera.set_tilt(action[1], normalized=True)
-        elif  self.config['rl']['action']['mode'] == "Velocity":
+        elif self.config['rl']['action']['mode'] == "Velocity":
             self.camera.set_pan(self.camera.get_pan(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
             self.camera.set_tilt(self.camera.get_tilt(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
+        elif self.config['rl']['action']['mode'] == "Absolute":
+            self.camera.look_at(action[0] * self.field_size[0], action[1] * self.field_size[1])
         else:
             print("Unknown action mode")
 
@@ -205,7 +207,7 @@ class SoccerWorldSim:
             # Include view history if wanted
             if observation_map_config["view_history_map"]:
                 observation_maps = np.dstack((self.view_history, observation_maps))
-                #cv2.imshow("map", cv2.resize(np.dstack((np.zeros_like(self.view_history), observation_maps)), (900, 600)))
+                #cv2.imshow("map", cv2.resize(np.dstack((np.zeros_like(self.view_history), observation_maps)), (9*self.render_resolution, 6*self.render_resolution)))
 
         self._last_pan = self.camera.get_pan(normalize=True)  # Current Camera Pan
         self._last_tilt = self.camera.get_tilt(normalize=True)  # Current Camera Tilt
