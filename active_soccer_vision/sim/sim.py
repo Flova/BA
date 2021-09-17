@@ -54,7 +54,12 @@ class SoccerWorldSim:
                 robot_init_orientation=(0.0, 0.0, random.uniform(0, math.tau)),
                 **self.config['robot']['gen']['orientation'])
 
-            self.robots.append(Robot(robot_position_generator, robot_orientation_generator, self.time_delta))
+            self.robots.append(
+                Robot(
+                    robot_position_generator,
+                    robot_orientation_generator,
+                    self.config['robot']['height'],
+                    self.time_delta))
 
         self.my_robot = self.robots[0]
         self.other_robots = self.robots[1:]

@@ -21,7 +21,7 @@ class Camera:
         self.tilt_limits=tilt_limits
         self.robot = robot
 
-        T_cam = [0.0, 0.0, 1.0]
+        T_cam = [0.0, 0.0, self.robot.height]
         R_cam = transforms3d.euler.euler2mat(math.pi/2, 0.0, 0.0)
         self.camera_frame = transforms3d.affines.compose(T_cam, R_cam, np.ones(3))
 

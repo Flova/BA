@@ -103,7 +103,7 @@ class robot_orientation_gen(object):
         return pos
 
 class Robot:
-    def __init__(self, position_generator, orientation_generator, time_delta):
+    def __init__(self, position_generator, orientation_generator, height, time_delta):
         self.position_generator = position_generator
         self.orientation_generator = orientation_generator
         self.time_delta = time_delta
@@ -113,6 +113,7 @@ class Robot:
         self.last_observed_position = np.array([0, 0])
         self.last_observed_heading = 0
         self.conf = 0
+        self.height = height
 
     def step(self):
         self.orientation, _ = self.orientation_generator.__next__()

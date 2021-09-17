@@ -16,6 +16,7 @@ ball:
     ball_noise: 0.1
 
 robot:
+  height: 0.8
   gen:
     position:
       walk_speed_factor: 0.5
