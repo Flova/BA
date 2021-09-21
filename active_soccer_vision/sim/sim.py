@@ -29,7 +29,7 @@ class SoccerWorldSim:
             time_delta=self.time_delta,
             ball_init_position=(
                 random.uniform(0, self.field_size[0]),
-                random.uniform(1, self.field_size[1])),
+                random.uniform(0, self.field_size[1])),
             ball_position_interval=(
                 self.field_size[0],
                 self.field_size[1]),
