@@ -113,8 +113,11 @@ class X3DParser:
 
         return list(map(simplify_dict, filter(is_player, self.xml_root.iter("Transform"))))
 
-    def get_player_names(self) -> list[str]:
+    def get_player_names(self) -> [str]:
         return list(map(lambda x: x["name"], self.get_players()))
 
     def get_player_id(self, name: str) -> int or None:
         return (list(map(lambda x: x["id"], filter(lambda x: x["name"] == name, self.get_players()))) + [None])[0]
+
+    def get_player_ids(self) -> [int]:
+        return list(map(self.get_player_id, self.get_player_names()))
