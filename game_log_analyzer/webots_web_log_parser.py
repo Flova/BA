@@ -9,7 +9,7 @@ class WebotsGameLogParser:
     """
     All the gamelogs for a given game folder
     """
-    def __init__(self, log_folder: str):
+    def __init__(self, log_folder: str, verbose=True):
         super().__init__()
 
         self.log_folder = log_folder
@@ -19,6 +19,10 @@ class WebotsGameLogParser:
 
         game_json_file = [file for file in os.listdir(self.log_folder) if file.endswith(".json")][0]
         self.game_data = GameJsonParser(os.path.join(log_folder, game_json_file))
+
+        if verbose:
+            print(f"Duration: {self.get_max_player_timestamp() / 60 :.2f} Minutes")
+            print(f"Players: {', '.join(self.x3d.get_player_names())}")
 
     def plot_paths(self):
         import matplotlib.pyplot as plt
@@ -36,6 +40,9 @@ class WebotsGameLogParser:
         ax = fig.add_subplot(111, projection='3d')
         ax.plot(*self.game_data.get_translations_for_id(id).T)
         fig.show()
+
+    def get_max_player_timestamp(self) -> float:
+        return max(self.game_data.get_timestamps_for_id(id).max() for id in self.x3d.get_player_ids())
 
 
 class GameJsonParser:
