@@ -2,6 +2,8 @@ import re
 import os
 import json
 import numpy as np
+import xml.etree.ElementTree as ET
+from functools import cache, cached_property
 
 class WebotsGameLogParser:
     """
@@ -18,7 +20,16 @@ class WebotsGameLogParser:
         game_json_file = [file for file in os.listdir(self.log_folder) if file.endswith(".json")][0]
         self.game_data = GameJsonParser(os.path.join(log_folder, game_json_file))
 
-    def plot_path(id: int):
+    def plot_paths(self):
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        for bot in self.x3d.get_player_names():
+            ax.plot(*self.game_data.get_translations_for_id(self.x3d.get_player_id(bot)).T)
+        fig.show()
+
+    def plot_path(self, id: int):
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
         fig = plt.figure()
@@ -38,12 +49,14 @@ class GameJsonParser:
         with open(self.jsonfile, "r") as f:
             self.data = json.load(f)
 
+    @cached_property
     def get_time_step_size(self) -> int:
         return self.data["basicTimeStep"]
 
     def _parse_str_vector(self, vec: str) -> np.ndarray:
         return np.array([float(num) for num in vec.split(" ")], dtype=np.float)
 
+    @cache
     def get_poses_for_id(self, id: int) -> dict:
         poses = []
         for frame in self.data["frames"]:
@@ -64,10 +77,12 @@ class GameJsonParser:
         return poses
 
     def get_translations_for_id(self, id: int) -> np.ndarray:
-        translations = []
-        for pose in self.get_poses_for_id(id):
-            translations.append(pose["trans"])
-        return np.array(translations)
+        translations = list(map(lambda x: x["trans"], self.get_poses_for_id(id)))
+        return np.array(translations, dtype=np.float)
+
+    def get_timestamps_for_id(self, id: int) -> np.ndarray:
+        timesteps = list(map(lambda x: x["time"], self.get_poses_for_id(id)))
+        return (np.array(timesteps, dtype=np.float) / 1000)
 
 
 class X3DParser:
@@ -80,18 +95,26 @@ class X3DParser:
 
         # Load file contents
         with open(self.x3d_file_path, "r") as f:
-            self.x3d_file_raw_content = f.read()
+            x3d_file_raw_content = f.read()
 
-    def get_object_names(self) -> list[str]:
-        """
-        Get the names of all 3d objects
-        """
-        return re.findall( r'name=\'(.*?)\'', self.x3d_file_raw_content)
+        self.xml_root = ET.fromstring(x3d_file_raw_content)
 
-    def get_players(self) -> list[str]:
+    @cache
+    def get_players(self) -> list[dict]:
         """
         Get the names of the loaded players
         """
-        def is_player(name: str) -> bool:
-            return "player" in name
-        return list(filter(is_player, self.get_object_names()))
+        def is_player(node: ET.Element) -> bool:
+            return "player" in node.attrib.get("name", "")
+
+        def simplify_dict(node: ET.Element) -> dict:
+            return {"id": int(node.attrib["id"][1:]),
+                    "name": str(node.attrib["name"])}
+
+        return list(map(simplify_dict, filter(is_player, self.xml_root.iter("Transform"))))
+
+    def get_player_names(self) -> list[str]:
+        return list(map(lambda x: x["name"], self.get_players()))
+
+    def get_player_id(self, name: str) -> int or None:
+        return (list(map(lambda x: x["id"], filter(lambda x: x["name"] == name, self.get_players()))) + [None])[0]
