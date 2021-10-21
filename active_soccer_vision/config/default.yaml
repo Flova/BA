@@ -1,4 +1,3 @@
-
 sim:
   field_size: [9, 6]
   time_delta: 0.1

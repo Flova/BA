@@ -10,5 +10,5 @@ check_env(env)
 env.reset()
 
 for i in range(8000):
-    print(env.step(np.array([0.0, -0.5])))
+    print(env.step(np.array([math.sin(i/4 -math.pi/2), math.sin(i/8 -math.pi/2)])))
     env.render()
