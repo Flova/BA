@@ -24,7 +24,10 @@ class WebotsGameLogParser:
             print(f"Duration: {self.get_max_player_timestamp() / 60 :.2f} Minutes")
             print(f"Players: {', '.join(self.x3d.get_player_names())}")
 
-    def plot_paths(self):
+    def plot_player_paths(self):
+        """
+        Creates a combined plot with the paths for all the players
+        """
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
         fig = plt.figure()
@@ -34,6 +37,9 @@ class WebotsGameLogParser:
         fig.show()
 
     def plot_path(self, id: int):
+        """
+        Creates a plot with the path for a certain object
+        """
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
         fig = plt.figure()
@@ -42,6 +48,9 @@ class WebotsGameLogParser:
         fig.show()
 
     def get_max_player_timestamp(self) -> float:
+        """
+        Returns the last timestamp where any of the players has movement data
+        """
         return max(self.game_data.get_timestamps_for_id(id).max() for id in self.x3d.get_player_ids())
 
 
@@ -58,13 +67,23 @@ class GameJsonParser:
 
     @cached_property
     def get_time_step_size(self) -> int:
+        """
+        Returns the basic time step in ms.
+        """
         return self.data["basicTimeStep"]
 
     def _parse_str_vector(self, vec: str) -> np.ndarray:
+        """
+        Converts a space divided string vector into a NumPy array.
+        """
         return np.array([float(num) for num in vec.split(" ")], dtype=np.float)
 
     @cache
-    def get_poses_for_id(self, id: int) -> dict:
+    def get_poses_for_id(self, id: int) -> [dict]:
+        """
+        Gets all the pose data for an object and
+        return a list of dicts containing the time and the pose.
+        """
         poses = []
         for frame in self.data["frames"]:
             time = frame["time"]
@@ -84,10 +103,16 @@ class GameJsonParser:
         return poses
 
     def get_translations_for_id(self, id: int) -> np.ndarray:
+        """
+        Returns an NumPy array with all translations for an object
+        """
         translations = list(map(lambda x: x["trans"], self.get_poses_for_id(id)))
         return np.array(translations, dtype=np.float)
 
     def get_timestamps_for_id(self, id: int) -> np.ndarray:
+        """
+        Returns an NumPy array with all timesteps for an object
+        """
         timesteps = list(map(lambda x: x["time"], self.get_poses_for_id(id)))
         return (np.array(timesteps, dtype=np.float) / 1000)
 
@@ -121,10 +146,19 @@ class X3DParser:
         return list(map(simplify_dict, filter(is_player, self.xml_root.iter("Transform"))))
 
     def get_player_names(self) -> [str]:
+        """
+        Returns a list with all player names
+        """
         return list(map(lambda x: x["name"], self.get_players()))
 
     def get_player_id(self, name: str) -> int or None:
+        """
+        The object id for a given player name
+        """
         return (list(map(lambda x: x["id"], filter(lambda x: x["name"] == name, self.get_players()))) + [None])[0]
 
     def get_player_ids(self) -> [int]:
+        """
+        Returns a list with all player object ids
+        """
         return list(map(self.get_player_id, self.get_player_names()))
