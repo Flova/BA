@@ -130,3 +130,6 @@ dmypy.json
 
 # Ignore the zoo
 zoo
+
+# Game logs
+game_log_analyzer/logs

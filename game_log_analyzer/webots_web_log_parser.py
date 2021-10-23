@@ -32,8 +32,11 @@ class WebotsGameLogParser:
         Creates a combined plot with the paths for all the players
         """
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.plot(*self.game_data.get_translations_for_id(self.x3d.get_ball_id()).T)
+        ax = fig.add_subplot(111)
+        ax.set_xlim(-4.5, 4.5)
+        ax.set_ylim(-3, 3)
+        ax.axis('equal')
+        ax.plot(*self.game_data.get_translations_for_id(self.x3d.get_ball_id()).T[0:2])
         plt.show()
 
     def plot_player_paths(self):
@@ -41,9 +44,12 @@ class WebotsGameLogParser:
         Creates a combined plot with the paths for all the players
         """
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111)
+        ax.set_xlim(-4.5, 4.5)
+        ax.set_ylim(-3, 3)
+        ax.axis('equal')
         for bot in self.x3d.get_player_names():
-            ax.plot(*self.game_data.get_translations_for_id(self.x3d.get_object_id(bot)).T)
+            ax.plot(*self.game_data.get_translations_for_id(self.x3d.get_object_id(bot)).T[0:2])
         plt.show()
 
     def plot_path(self, id: int):
@@ -95,7 +101,7 @@ class GameJsonParser:
         poses = []
         for frame in self.data["frames"]:
             time = frame["time"]
-            if frame["poses"]:
+            if "poses" in frame.keys():
                 for sim_object in frame["poses"]:
                     if sim_object["id"] == id:
                         if "translation" in sim_object.keys():
@@ -108,7 +114,7 @@ class GameJsonParser:
                             "rot": rotation
                         })
                         break
-        return poses
+        return self.cleanup_poses(poses)
 
     def get_translations_for_id(self, id: int) -> np.ndarray:
         """
@@ -133,8 +139,14 @@ class GameJsonParser:
 
         return np.interpolate(timesteps, translations)
 
-    def cleanup_poses(poses: dict)-> dict:
-        return poses
+    def cleanup_poses(self, poses: [dict])-> [dict]:
+        """
+        Removes out of bounds poses caused by e.g. the referee
+        """
+        def in_bounds(pose: dict, treshold: float = 4.5) -> bool:
+            return all(treshold > np.abs(pose["trans"]))
+
+        return list(filter(in_bounds, poses))
 
 
 class X3DParser:
@@ -197,6 +209,6 @@ class X3DParser:
         return simplify(next(filter(is_ball, self.xml_root.iter("Transform"))))
 
 if __name__ == "__main__":
-    gp = WebotsGameLogParser("/tmp/data.bit-bots.de/ROSbags/robocup_2021/K-KO-3RD/public_logs/game1")
+    gp = WebotsGameLogParser("/home/florian/Uni/BA/game_log_analyzer/logs")
     gp.plot_player_paths()
     gp.plot_ball_path()
