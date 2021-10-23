@@ -5,6 +5,9 @@ import numpy as np
 import xml.etree.ElementTree as ET
 from functools import cache, cached_property
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 class WebotsGameLogParser:
     """
     All the gamelogs for a given game folder
@@ -28,24 +31,20 @@ class WebotsGameLogParser:
         """
         Creates a combined plot with the paths for all the players
         """
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         for bot in self.x3d.get_player_names():
-            ax.plot(*self.game_data.get_translations_for_id(self.x3d.get_player_id(bot)).T)
-        fig.show()
+            ax.plot(*self.game_data.get_translations_for_id(self.x3d.get_object_id(bot)).T)
+        plt.show()
 
     def plot_path(self, id: int):
         """
         Creates a plot with the path for a certain object
         """
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         ax.plot(*self.game_data.get_translations_for_id(id).T)
-        fig.show()
+        plt.show()
 
     def get_max_player_timestamp(self) -> float:
         """
@@ -76,7 +75,7 @@ class GameJsonParser:
         """
         Converts a space divided string vector into a NumPy array.
         """
-        return np.array([float(num) for num in vec.split(" ")], dtype=np.float)
+        return np.array([float(num) for num in vec.split(" ")], dtype=float)
 
     @cache
     def get_poses_for_id(self, id: int) -> [dict]:
@@ -107,7 +106,7 @@ class GameJsonParser:
         Returns an NumPy array with all translations for an object
         """
         translations = list(map(lambda x: x["trans"], self.get_poses_for_id(id)))
-        return np.array(translations, dtype=np.float)
+        return np.array(translations, dtype=float)
 
     def get_timestamps_for_id(self, id: int) -> np.ndarray:
         """
@@ -151,9 +150,9 @@ class X3DParser:
         """
         return list(map(lambda x: x["name"], self.get_players()))
 
-    def get_player_id(self, name: str) -> int or None:
+    def get_object_id(self, name: str) -> int or None:
         """
-        The object id for a given player name
+        The object id for a given name
         """
         return (list(map(lambda x: x["id"], filter(lambda x: x["name"] == name, self.get_players()))) + [None])[0]
 
@@ -161,4 +160,5 @@ class X3DParser:
         """
         Returns a list with all player object ids
         """
-        return list(map(self.get_player_id, self.get_player_names()))
+        return list(map(self.get_object_id, self.get_player_names()))
+
