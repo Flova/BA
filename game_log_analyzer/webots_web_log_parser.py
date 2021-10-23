@@ -27,6 +27,15 @@ class WebotsGameLogParser:
             print(f"Duration: {self.get_max_player_timestamp() / 60 :.2f} Minutes")
             print(f"Players: {', '.join(self.x3d.get_player_names())}")
 
+    def plot_ball_path(self):
+        """
+        Creates a combined plot with the paths for all the players
+        """
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot(*self.game_data.get_translations_for_id(self.x3d.get_ball_id()).T)
+        plt.show()
+
     def plot_player_paths(self):
         """
         Creates a combined plot with the paths for all the players
@@ -113,7 +122,19 @@ class GameJsonParser:
         Returns an NumPy array with all timesteps for an object
         """
         timesteps = list(map(lambda x: x["time"], self.get_poses_for_id(id)))
-        return (np.array(timesteps, dtype=np.float) / 1000)
+        return (np.array(timesteps, dtype=float) / 1000)
+
+    def get_interpolated_and_scaled_translations_for_id(self, id: int) -> np.ndarray:
+        """
+        Just pseudo implementation, THIS DOES NOT WORK
+        """
+        timesteps = self.get_timestamps_for_id(id)
+        translations = self.get_translations_for_id(id)
+
+        return np.interpolate(timesteps, translations)
+
+    def cleanup_poses(poses: dict)-> dict:
+        return poses
 
 
 class X3DParser:
@@ -162,3 +183,20 @@ class X3DParser:
         """
         return list(map(self.get_object_id, self.get_player_names()))
 
+    @cache
+    def get_ball_id(self) -> int:
+        """
+        Returns the object id of the ball
+        """
+        def is_ball(node: ET.Element) -> bool:
+            return "robocup soccer ball" == node.attrib.get("name", "")
+
+        def simplify(node: ET.Element) -> dict:
+            return int(node.attrib["id"][1:])
+
+        return simplify(next(filter(is_ball, self.xml_root.iter("Transform"))))
+
+if __name__ == "__main__":
+    gp = WebotsGameLogParser("/tmp/data.bit-bots.de/ROSbags/robocup_2021/K-KO-3RD/public_logs/game1")
+    gp.plot_player_paths()
+    gp.plot_ball_path()
