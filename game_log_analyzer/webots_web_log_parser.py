@@ -67,6 +67,11 @@ class WebotsGameLogParser:
         """
         return max(self.game_data.get_timestamps_for_id(id).max() for id in self.x3d.get_player_ids())
 
+    def get_velocitys_for_id(self, id: int):
+        """
+
+        """
+
 
 class GameJsonParser:
     """
@@ -129,15 +134,6 @@ class GameJsonParser:
         """
         timesteps = list(map(lambda x: x["time"], self.get_poses_for_id(id)))
         return (np.array(timesteps, dtype=float) / 1000)
-
-    def get_interpolated_and_scaled_translations_for_id(self, id: int) -> np.ndarray:
-        """
-        Just pseudo implementation, THIS DOES NOT WORK
-        """
-        timesteps = self.get_timestamps_for_id(id)
-        translations = self.get_translations_for_id(id)
-
-        return np.interpolate(timesteps, translations)
 
     def cleanup_poses(self, poses: [dict])-> [dict]:
         """
