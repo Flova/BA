@@ -67,11 +67,6 @@ class WebotsGameLogParser:
         """
         return max(self.game_data.get_timestamps_for_id(id).max() for id in self.x3d.get_player_ids())
 
-    def get_velocitys_for_id(self, id: int):
-        """
-
-        """
-
 
 class GameJsonParser:
     """
@@ -134,6 +129,20 @@ class GameJsonParser:
         """
         timesteps = list(map(lambda x: x["time"], self.get_poses_for_id(id)))
         return (np.array(timesteps, dtype=float) / 1000)
+
+    def get_velocity_vectors_for_id(self, id: int):
+        """
+        Calcs vel vecs for a given id
+        """
+        Δtrans = np.diff(self.get_translations_for_id(id), axis=0)
+        Δtime = np.diff(self.get_timestamps_for_id(id))
+        return Δtrans / Δtime[:, np.newaxis]
+
+    def get_velocities_for_id(self, id: int):
+        """
+        Calcs vels for a given id
+        """
+        return np.linalg.norm(self.get_velocity_vectors_for_id(id), axis=1)
 
     def cleanup_poses(self, poses: [dict])-> [dict]:
         """
