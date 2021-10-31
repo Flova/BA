@@ -153,6 +153,22 @@ class GameJsonParser:
 
         return list(filter(in_bounds, poses))
 
+    def get_interpolated_translations(self, id: int, start: float = None, stop: float = None, step_size: float = 0.1) -> np.ndarray:
+        """
+        Returns the translation data interpolated to fit a given step size
+        """
+        # Get the data that should be interpolated
+        fp = self.get_translations_for_id(id)
+        xp = self.get_timestamps_for_id(id)
+        # Add default values if necessary. Use the first and last timestep for the given id.
+        if start is None: start = xp[0]
+        if stop is None: stop = xp[-1]
+        # Create the array of query values
+        x_steps = np.arange(start=start, stop=stop, step=step_size)
+        # Interpolate for each axis
+        inter = np.stack([np.interp(x_steps, xp, fp[:, i]) for i in range(3)])
+        return inter
+
 
 class X3DParser:
     """
