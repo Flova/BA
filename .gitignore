@@ -132,4 +132,4 @@ dmypy.json
 zoo
 
 # Game logs
-game_log_analyzer/logs
+logs/
