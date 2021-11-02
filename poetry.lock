@@ -786,7 +786,7 @@ python-versions = "*"
 
 [[package]]
 name = "webots-web-log-interface"
-version = "0.2.0"
+version = "0.2.3"
 description = "A python library used to interact with webots robocup game web logs"
 category = "main"
 optional = false
@@ -1546,8 +1546,8 @@ wcwidth = [
     {file = "wcwidth-0.2.5.tar.gz", hash = "sha256:c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83"},
 ]
 webots-web-log-interface = [
-    {file = "webots-web-log-interface-0.2.0.tar.gz", hash = "sha256:1789b0adb485b50bd9e578bfced2a94551559383726c5cd1ccd91d1926629b7d"},
-    {file = "webots_web_log_interface-0.2.0-py3-none-any.whl", hash = "sha256:d3c49a534aff1d70c565bc6289bc158958a8d51349ea3d43c7c87b4252aa8f11"},
+    {file = "webots-web-log-interface-0.2.3.tar.gz", hash = "sha256:48a00d754e1e2a60225c20958bc013512f96588d4d0be5c7aaabe30b415e80f8"},
+    {file = "webots_web_log_interface-0.2.3-py3-none-any.whl", hash = "sha256:8b6ac8f5fed8b328adfa4977675eaa6324296bd42b28ddc378eebc736414cdfa"},
 ]
 werkzeug = [
     {file = "Werkzeug-2.0.1-py3-none-any.whl", hash = "sha256:6c1ec500dcdba0baa27600f6a22f6333d8b662d22027ff9f6202e3367413caa8"},
