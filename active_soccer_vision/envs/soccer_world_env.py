@@ -47,7 +47,6 @@ class SoccerWorldEnv(gym.Env):
 
         reward = self._get_reward()
 
-        #self.render()
         done = self.counter > self._sim_length
         self.counter += 1
         info = {}
