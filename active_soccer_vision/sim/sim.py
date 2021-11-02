@@ -63,7 +63,7 @@ class SoccerWorldSim:
         if self.load_recordings:
             robot_names = self.webots_log_loader.x3d.get_player_names()
             random.shuffle(robot_names)
-            assert len(robot_names) == self.num_robots, "More robots present in recording than in the config"
+            assert len(robot_names) >= self.num_robots, "More robots present in recording than in the config"
         else:
             robot_names = list(range(5))
 
