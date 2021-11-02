@@ -9,6 +9,8 @@ env = SoccerWorldEnv("default.yaml")
 check_env(env)
 env.reset()
 
-for i in range(8000):
-    print(env.step(np.array([math.sin(i/4 -math.pi/2), math.sin(i/8 -math.pi/2)])))
+done = False
+for i in range(9999999):
+    obs = env.step(np.array([math.sin(i/4 -math.pi/2), math.sin(i/8 -math.pi/2)]))
+    if obs[2]: break
     env.render()
