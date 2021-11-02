@@ -66,6 +66,41 @@ class ball_position_gen(object):
                 np.random.randn(2) * self._ball_noise,
                 np.array([0.0, 0.0]), np.array(self._ball_position_interval))
 
+class ball_position_player:
+    def __init__(self,
+                 game_log,
+                 time_delta = 0.1,
+                 ball_position_interval = (9.0, 6.0),
+                 ball_noise = 0.1):
+
+        self._time_delta = time_delta
+        self._ball_noise = ball_noise
+        self._ball_position_interval = np.array(ball_position_interval)
+        self._game_log = game_log
+        ball_id = self._game_log.x3d.get_ball_id()
+        self._ball_movement = self._game_log.game_data.get_interpolated_translations(id=ball_id, start=0.0, step_size=time_delta)[:, 0:2]
+        self._step = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        # Get current frame
+        ball_position = self._ball_movement[self._step]
+
+        # Transform coordinates
+        ball_position += self._ball_position_interval / 2
+
+        # Apply noise
+        ball_with_noise = np.clip(
+                ball_position + np.random.randn(2) * self._ball_noise,
+                np.array([0.0, 0.0]), self._ball_position_interval)
+
+        # Step
+        self._step += 1
+
+        return ball_with_noise , ball_position
+
 
 class Ball:
     def __init__(self, position_generator, time_delta):
