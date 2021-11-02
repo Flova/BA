@@ -5,10 +5,11 @@ import cv2
 import random
 import numpy as np
 from gym import spaces
-from scipy.stats import multivariate_normal
 
-from active_soccer_vision.sim.ball import ball_position_gen, Ball
-from active_soccer_vision.sim.robot import robot_position_gen, robot_orientation_gen, Robot
+from webots_web_log_interface.interface import WebotsGameLogParser
+
+from active_soccer_vision.sim.ball import ball_position_gen, ball_position_player, Ball
+from active_soccer_vision.sim.robot import robot_position_gen, robot_position_player, robot_orientation_gen, robot_orientation_player, Robot
 from active_soccer_vision.sim.camera import Camera
 
 class SoccerWorldSim:
@@ -25,34 +26,80 @@ class SoccerWorldSim:
 
         self.num_robots = self.config['misc']['num_robots']
 
-        ball_position_generator = ball_position_gen(
-            time_delta=self.time_delta,
-            ball_init_position=(
-                random.uniform(0, self.field_size[0]),
-                random.uniform(0, self.field_size[1])),
-            ball_position_interval=(
-                self.field_size[0],
-                self.field_size[1]),
-            **self.config['ball']['gen'])
+        self.load_recordings = self.config['ball']['recorded'] or self.config['ball']['recorded']
+
+        self.game_log_paths = self.config['player']['game_logs']
+        random.shuffle(self.game_log_paths)
+
+        # Load the game log if needed
+        if self.load_recordings:
+            self.webots_log_loader = WebotsGameLogParser(self.game_log_paths[0], verbose=False)
+            self.webots_log_loader.start = random.randrange(0,
+                int(self.webots_log_loader.get_max_player_timestamp() - self.config['sim']['length'] * self.time_delta))
+
+        # Check if we use the recorded or generated bakk movements
+        if self.config['ball']['recorded']:
+            ball_position_generator = ball_position_player(
+                game_log=self.webots_log_loader,
+                time_delta=self.time_delta,
+                start=self.webots_log_loader.start,
+                ball_position_interval=(
+                    self.field_size[0],
+                    self.field_size[1]))
+        else:
+            ball_position_generator = ball_position_gen(
+                time_delta=self.time_delta,
+                ball_init_position=(
+                    random.uniform(0, self.field_size[0]),
+                    random.uniform(0, self.field_size[1])),
+                ball_position_interval=(
+                    self.field_size[0],
+                    self.field_size[1]),
+                **self.config['ball']['gen'])
 
         self.ball = Ball(ball_position_generator, self.time_delta)
 
-        self.robots = []
-        for i in range(self.num_robots):
-            robot_position_generator = robot_position_gen(
-                time_delta=self.time_delta,
-                robot_init_position=(
-                    random.uniform(0, self.field_size[0]),
-                    random.uniform(1, self.field_size[1])),
-                robot_position_interval=(
-                    self.field_size[0],
-                    self.field_size[1]),
-                **self.config['robot']['gen']['position'])
+        # Load and shuffle robots from recording or create a dummy object
+        if self.load_recordings:
+            robot_names = self.webots_log_loader.x3d.get_player_names()
+            random.shuffle(robot_names)
+            assert len(robot_names) == self.num_robots, "More robots present in recording than in the config"
+        else:
+            robot_names = list(range(5))
 
-            robot_orientation_generator = robot_orientation_gen(
-                time_delta=self.time_delta,
-                robot_init_orientation=(0.0, 0.0, random.uniform(0, math.tau)),
-                **self.config['robot']['gen']['orientation'])
+        # Create all robots
+        self.robots = []
+        for name in robot_names:
+            # Check if we use the recorded or generated robot movements
+            if self.config['robot']['recorded']:
+                robot_orientation_generator = robot_orientation_player(
+                    game_log=self.webots_log_loader,
+                    start=self.webots_log_loader.start,
+                    time_delta=self.time_delta,
+                    robot=name,
+                    )
+                robot_position_generator = robot_position_player(
+                    game_log=self.webots_log_loader,
+                    start=self.webots_log_loader.start,
+                    robot=name,
+                    time_delta=self.time_delta,
+                    robot_position_interval=(
+                        self.field_size[0],
+                        self.field_size[1]))
+            else:
+                robot_position_generator = robot_position_gen(
+                    time_delta=self.time_delta,
+                    robot_init_position=(
+                        random.uniform(0, self.field_size[0]),
+                        random.uniform(1, self.field_size[1])),
+                    robot_position_interval=(
+                        self.field_size[0],
+                        self.field_size[1]),
+                    **self.config['robot']['gen']['position'])
+                robot_orientation_generator = robot_orientation_gen(
+                    time_delta=self.time_delta,
+                    robot_init_orientation=(0.0, 0.0, random.uniform(0, math.tau)),
+                    **self.config['robot']['gen']['orientation'])
 
             self.robots.append(
                 Robot(
@@ -207,7 +254,7 @@ class SoccerWorldSim:
             # Include view history if wanted
             if observation_map_config["view_history_map"]:
                 observation_maps = np.dstack((self.view_history, observation_maps))
-                #cv2.imshow("map", cv2.resize(np.dstack((np.zeros_like(self.view_history), observation_maps)), (9*self.render_resolution, 6*self.render_resolution)))
+                cv2.imshow("map", cv2.resize(np.dstack((np.zeros_like(self.view_history), observation_maps)), (9*self.render_resolution, 6*self.render_resolution)))
 
         self._last_pan = self.camera.get_pan(normalize=True)  # Current Camera Pan
         self._last_tilt = self.camera.get_tilt(normalize=True)  # Current Camera Tilt

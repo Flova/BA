@@ -70,6 +70,8 @@ class ball_position_player:
     def __init__(self,
                  game_log,
                  time_delta = 0.1,
+                 start=0.0,
+                 stop=None,
                  ball_position_interval = (9.0, 6.0),
                  ball_noise = 0.1):
 
@@ -78,7 +80,8 @@ class ball_position_player:
         self._ball_position_interval = np.array(ball_position_interval)
         self._game_log = game_log
         ball_id = self._game_log.x3d.get_ball_id()
-        self._ball_movement = self._game_log.game_data.get_interpolated_translations(id=ball_id, start=0.0, step_size=time_delta)[:, 0:2]
+        self._ball_movement = self._game_log.game_data.get_interpolated_translations(
+            id=ball_id, start=start, stop=stop, step_size=time_delta)[:, 0:2]
         self._step = 0
 
     def __iter__(self):

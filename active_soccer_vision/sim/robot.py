@@ -68,6 +68,8 @@ class robot_position_player:
     def __init__(self,
                  game_log,
                  time_delta = 0.1,
+                 start=0.0,
+                 stop=None,
                  robot_position_interval = (9.0, 6.0),
                  noise = 0.02,
                  robot="red player 1"):
@@ -77,7 +79,8 @@ class robot_position_player:
         self._robot_position_interval = np.array(robot_position_interval)
         self._game_log = game_log
         robot_obj_id = self._game_log.x3d.get_player_id(robot)
-        self._robot_movement = self._game_log.game_data.get_interpolated_translations(id=robot_obj_id, start=0.0, step_size=time_delta)[:, 0:2]
+        self._robot_movement = self._game_log.game_data.get_interpolated_translations(
+            id=robot_obj_id, start=start, stop=stop, step_size=time_delta)[:, 0:2]
         self._step = 0
 
     def __iter__(self):
@@ -86,18 +89,14 @@ class robot_position_player:
     def __next__(self):
         # Get current frame
         ball_position = self._robot_movement[self._step]
-
         # Transform coordinates
         ball_position += self._robot_position_interval / 2
-
         # Apply noise
         ball_with_noise = np.clip(
                 ball_position + np.random.randn(2) * self._noise,
                 np.array([0.0, 0.0]), self._robot_position_interval)
-
         # Step
         self._step += 1
-
         return ball_with_noise , ball_position
 
 
@@ -106,13 +105,16 @@ class robot_orientation_player:
                  game_log,
                  time_delta = 0.1,
                  noise = 0.02,
+                 start=0.0,
+                 stop=None,
                  robot="red player 1"):
 
         self._time_delta = time_delta
         self._noise = noise
         self._game_log = game_log
         robot_obj_id = self._game_log.x3d.get_player_id(robot)
-        self._robot_movement = self._game_log.game_data.get_interpolated_orientations(id=robot_obj_id, step_size=time_delta)
+        self._robot_movement = self._game_log.game_data.get_interpolated_orientations(
+            id=robot_obj_id, start=start, stop=stop, step_size=time_delta)
         self._step = 0
 
     def __iter__(self):
