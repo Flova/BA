@@ -12,5 +12,6 @@ env.reset()
 done = False
 for i in range(9999999):
     obs = env.step(np.array([math.sin(i/4 -math.pi/2), math.sin(i/8 -math.pi/2)]))
+    print(obs)
     if obs[2]: break
     env.render()
