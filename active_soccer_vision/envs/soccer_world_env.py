@@ -1,3 +1,4 @@
+import gc
 import os
 import yaml
 import time
@@ -77,6 +78,8 @@ class SoccerWorldEnv(gym.Env):
 
     def reset(self):
         self.counter = 0
+        del self.sim
+        gc.collect()
         self.sim = SoccerWorldSim(self.config)
 
         if not self.config['rl']['observation']['maps']['observation_maps']:
