@@ -122,9 +122,10 @@ class robot_orientation_player:
 
     def __next__(self):
         # Get current frame
-        robot_orientation = transforms3d.euler.axangle2euler(
+        robot_orientation = np.zeros(3)
+        robot_orientation[2] = transforms3d.euler.axangle2euler(
             self._robot_movement[self._step][:3],
-            self._robot_movement[self._step][3])
+            self._robot_movement[self._step][3])[2]
         # Apply noise
         orientation_with_noise = robot_orientation + np.random.randn(3) * self._noise
         # Step
