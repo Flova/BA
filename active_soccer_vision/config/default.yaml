@@ -2,7 +2,7 @@ sim:
   field_size: [9, 6]
   time_delta: 0.1
   render_resolution: 80
-  length: 2000
+  length: 4000
 
 misc:
   num_robots: 4
@@ -13,24 +13,24 @@ player:
   ]
 
 ball:
-  recorded: True
+  recorded: False
   gen:
     friction_factor: 0.8
     kick_intensity: 5.0
     kick_prop: 0.005
-    ball_noise: 0.1
+    ball_noise: 0.05
 
 robot:
   height: 0.8
-  recorded: True
+  recorded: False
   gen:
     position:
-      walk_speed_factor: 0.5
+      walk_speed_factor: 0.3
       noise: 0.02
       walk_prop: 0.1
       stop_prop: 0.01
     orientation:
-      turn_speed_factor: 1
+      turn_speed_factor: 0.5
       noise: 0.0
       turn_prop: 0.1
       stop_prop: 0.01
@@ -56,12 +56,12 @@ rl:
       view_history_map: True
       view_history_map_decay: 0.99
   action:
-    mode: "Position"  # Pattern, Velocity, Position, Absolute
+    mode: "Absolute"  # Pattern, Velocity, Position, Absolute
   reward:
-    base: 1
+    base: 0 #1
     ball_visibility: 1
-    robot_visibility: 1
-    sin_demonstration_mse: -1
+    robot_visibility: 0
+    sin_demonstration_mse: 0 #-0.1
     ball_confidence: 0
     robot_confidence: 0
     field_coverage_mean: 0
