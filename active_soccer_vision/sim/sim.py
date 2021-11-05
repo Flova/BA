@@ -126,8 +126,29 @@ class SoccerWorldSim:
         self._sim_step = 0
 
     def step(self, action):
-        # Scalse actions to 0-1
-        action = (action + 1) / 2
+        if self.config['rl']['action']['space'] == "discrete":
+            tmp_action = np.zeros(2)
+            if action == 0:
+                tmp_action[0] = 0.0
+                tmp_action[1] = 0.0
+            elif action == 1:
+                tmp_action[0] = 1.5
+                tmp_action[1] = 0.0
+            elif action == 1:
+                tmp_action[0] = -1.5
+                tmp_action[1] = 0.0
+            elif action == 1:
+                tmp_action[0] = 0.0
+                tmp_action[1] = 1.5
+            elif action == 1:
+                tmp_action[0] = 0.0
+                tmp_action[1] = -1.5
+            else:
+                print(action)
+            action = tmp_action
+        elif self.config['rl']['action']['space'] == continuos:
+            # Scalse actions to 0-1
+            action = (action + 1) / 2
 
         # Generate ball and robot pose
         self.ball.step()
@@ -144,26 +165,6 @@ class SoccerWorldSim:
             self.camera.set_pan(action[0], normalized=True)
             self.camera.set_tilt(action[1], normalized=True)
         elif self.config['rl']['action']['mode'] == "Velocity":
-            if self.config['rl']['action']['space'] == "discrete":
-                tmp_action = np.zeros(2)
-                if action == 0:
-                    tmp_action[0] = 0.0
-                    tmp_action[1] = 0.0
-                elif action == 1:
-                    tmp_action[0] = 1.5
-                    tmp_action[1] = 0.0
-                elif action == 1:
-                    tmp_action[0] = -1.5
-                    tmp_action[1] = 0.0
-                elif action == 1:
-                    tmp_action[0] = 0.0
-                    tmp_action[1] = 1.5
-                elif action == 1:
-                    tmp_action[0] = 0.0
-                    tmp_action[1] = -1.5
-                else:
-                    print(action)
-                action = tmp_action
             self.camera.set_pan(self.camera.get_pan(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
             self.camera.set_tilt(self.camera.get_tilt(normalize=True) + (action[0] - 0.5) * self.time_delta, normalized=True)
         elif self.config['rl']['action']['mode'] == "Absolute":
