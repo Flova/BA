@@ -62,9 +62,9 @@ class SoccerWorldSim:
 
         # Load and shuffle robots from recording or create a dummy object
         if self.config['robot']['recorded']:
-            assert len(robot_names) >= self.num_robots, "More robots present in recording than in the config"
             robot_names = self.webots_log_loader.x3d.get_player_names()
             random.shuffle(robot_names)
+            assert len(robot_names) >= self.num_robots, "More robots present in recording than in the config"
             robot_names = robot_names[:self.num_robots]
         else:
             robot_names = list(range(self.num_robots))
