@@ -24,7 +24,12 @@ class SoccerWorldEnv(gym.Env):
         with open(os.path.join(__location__, '../config', config_file)) as f:
             self.config = yaml.safe_load(f)
 
-        self.action_space = spaces.Box(np.array([-1,-1]), np.array([1,1]), dtype=np.float32)
+        if self.config['rl']['action']['space'] == "discrete":
+            self.action_space = spaces.Discrete(5)
+        elif self.config['rl']['action']['space'] == "continuos":
+            self.action_space = spaces.Box(np.array([-1,-1]), np.array([1,1]), dtype=np.float32)
+        else:
+            print("Unknown action space!")
 
         if not self.config['rl']['observation']['maps']['observation_maps']:
             self.observation_space = spaces.Box(0, 1, (self.config['rl']['observation']['vec']['num'],), dtype=np.float32)
