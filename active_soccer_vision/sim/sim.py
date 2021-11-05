@@ -134,13 +134,13 @@ class SoccerWorldSim:
             elif action == 1:
                 tmp_action[0] = 1.5
                 tmp_action[1] = 0.0
-            elif action == 1:
+            elif action == 2:
                 tmp_action[0] = -1.5
                 tmp_action[1] = 0.0
-            elif action == 1:
+            elif action == 3:
                 tmp_action[0] = 0.0
                 tmp_action[1] = 1.5
-            elif action == 1:
+            elif action == 4:
                 tmp_action[0] = 0.0
                 tmp_action[1] = -1.5
             else:
