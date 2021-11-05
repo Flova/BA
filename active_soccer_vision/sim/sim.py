@@ -189,12 +189,12 @@ class SoccerWorldSim:
         if observation_vector_config["neck_joint_position"]:
             observation_vector += [
                 self.camera.get_pan(normalize=True),  # Current Camera Pan
-                #self.camera.get_tilt(normalize=True),  # Current Camera Tilt
+                self.camera.get_tilt(normalize=True),  # Current Camera Tilt
             ]
         if observation_vector_config["neck_joint_position_history"]:
             observation_vector += [
                 self._last_pan,
-                #self._last_tilt,
+                self._last_tilt,
             ]
 
         # Phase
