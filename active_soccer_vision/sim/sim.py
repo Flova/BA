@@ -45,7 +45,8 @@ class SoccerWorldSim:
                 start=self.webots_log_loader.start,
                 ball_position_interval=(
                     self.field_size[0],
-                    self.field_size[1]))
+                    self.field_size[1]),
+                ball_noise=self.config['ball']['gen']['ball_noise'])
         else:
             ball_position_generator = ball_position_gen(
                 time_delta=self.time_delta,
@@ -77,7 +78,7 @@ class SoccerWorldSim:
                     start=self.webots_log_loader.start,
                     time_delta=self.time_delta,
                     robot=name,
-                    )
+                    noise=self.config['robot']['gen']['position']['noise'])
                 robot_position_generator = robot_position_player(
                     game_log=self.webots_log_loader,
                     start=self.webots_log_loader.start,
@@ -85,7 +86,8 @@ class SoccerWorldSim:
                     time_delta=self.time_delta,
                     robot_position_interval=(
                         self.field_size[0],
-                        self.field_size[1]))
+                        self.field_size[1]),
+                    noise=self.config['robot']['gen']['position']['noise'])
             else:
                 robot_position_generator = robot_position_gen(
                     time_delta=self.time_delta,
