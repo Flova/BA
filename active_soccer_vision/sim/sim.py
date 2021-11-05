@@ -278,7 +278,7 @@ class SoccerWorldSim:
             # Include view history if wanted
             if observation_map_config["view_history_map"]:
                 observation_maps = np.dstack((self.view_history, observation_maps))
-                cv2.imshow("map", cv2.resize(np.dstack((np.zeros_like(self.view_history), observation_maps)), (9*self.render_resolution, 6*self.render_resolution)))
+                #cv2.imshow("map", cv2.resize(np.dstack((np.zeros_like(self.view_history), observation_maps)), (9*self.render_resolution, 6*self.render_resolution)))
 
         self._last_pan = self.camera.get_pan(normalize=True)  # Current Camera Pan
         self._last_tilt = self.camera.get_tilt(normalize=True)  # Current Camera Tilt
@@ -287,7 +287,6 @@ class SoccerWorldSim:
 
         # Check if we have observation maps
         if observation_maps is None:
-            print(len(observation_vector))
             return np.array(observation_vector, dtype=np.float32)
         else:
             return {
