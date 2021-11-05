@@ -146,7 +146,7 @@ class SoccerWorldSim:
             else:
                 print(action)
             action = tmp_action
-        elif self.config['rl']['action']['space'] == continuos:
+        elif self.config['rl']['action']['space'] == "continuos":
             # Scalse actions to 0-1
             action = (action + 1) / 2
 

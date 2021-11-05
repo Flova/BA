@@ -101,7 +101,7 @@ class SoccerWorldEnv(gym.Env):
         if self.counter != 0:
             viz = self.sim.render()
 
-            #time.sleep(self.sim.time_delta)
+            time.sleep(self.sim.time_delta)
 
             if mode == "human":
                 # Show the image
