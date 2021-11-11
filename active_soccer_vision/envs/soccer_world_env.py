@@ -8,6 +8,7 @@ import math
 import random
 import numpy as np
 from gym import spaces
+from collections import defaultdict
 
 from active_soccer_vision.sim.sim import SoccerWorldSim
 
@@ -47,6 +48,9 @@ class SoccerWorldEnv(gym.Env):
 
         self.counter = 0
 
+        self.ball_confidence_buffer = {}
+        self.robot_confidence_buffer = defaultdict(float)
+
     def step(self, action):
 
         observation = self.sim.step(action)
@@ -56,6 +60,14 @@ class SoccerWorldEnv(gym.Env):
         done = self.counter > self._sim_length
         self.counter += 1
         info = {}
+
+        if done:
+            info['mean_ball_confidence'] = np.array(self.ball_confidence_buffer.values()).mean()
+            info['mean_robots_confidence'] = np.array(self.robot_confidence_buffer.values()).mean()
+            info['std_ball_confidence'] = np.array(self.ball_confidence_buffer.values()).std()
+            info['std_robots_confidence'] = np.array(self.robot_confidence_buffer.values()).std()
+            print(info)
+
         return observation, reward, done, info
 
     def _get_reward(self):
@@ -69,8 +81,11 @@ class SoccerWorldEnv(gym.Env):
                 reward += self.config['rl']['reward']['robot_visibility'] / len(self.sim.other_robots)
         # Reward based on the world model confidence
         reward += self.config['rl']['reward']['ball_confidence'] * self.sim.ball.get_last_observed_2d_position()[1]
+        self.ball_confidence_buffer[self.counter] = self.sim.ball.get_last_observed_2d_position()[1]
         for robot in self.sim.other_robots:
-            reward += self.config['rl']['reward']['robot_confidence'] * robot.get_last_observed_2d_position()[1] / len(self.sim.other_robots)
+            normalized_robot_confidence = robot.get_last_observed_2d_position()[1] / len(self.sim.other_robots)
+            reward += self.config['rl']['reward']['robot_confidence'] * normalized_robot_confidence
+            self.robot_confidence_buffer[self.counter] += normalized_robot_confidence
         # Reward based on the field coverage
         if self.config['rl']['reward']['field_coverage_mean'] != 0:
             reward += self.config['rl']['reward']['field_coverage_mean'] * float(self.sim.view_history.mean()) / 255
@@ -82,7 +97,11 @@ class SoccerWorldEnv(gym.Env):
         return reward
 
     def reset(self):
+        self.ball_confidence_buffer = {}
+        self.robot_confidence_buffer = defaultdict(float)
+
         self.counter = 0
+
         del self.sim
         gc.collect()
         self.sim = SoccerWorldSim(self.config)
