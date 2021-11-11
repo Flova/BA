@@ -62,11 +62,11 @@ class SoccerWorldEnv(gym.Env):
         info = {}
 
         if done:
-            info['mean_ball_confidence'] = np.array(self.ball_confidence_buffer.values()).mean()
-            info['mean_robots_confidence'] = np.array(self.robot_confidence_buffer.values()).mean()
-            info['std_ball_confidence'] = np.array(self.ball_confidence_buffer.values()).std()
-            info['std_robots_confidence'] = np.array(self.robot_confidence_buffer.values()).std()
-            print(info)
+            info['mean_ball_confidence'] = np.array(list(self.ball_confidence_buffer.values())).mean()
+            info['mean_robots_confidence'] = np.array(list(self.robot_confidence_buffer.values())).mean()
+            info['std_ball_confidence'] = np.array(list(self.ball_confidence_buffer.values())).std()
+            info['std_robots_confidence'] = np.array(list(self.robot_confidence_buffer.values())).std()
+            #print(info)
 
         return observation, reward, done, info
 
