@@ -39,7 +39,7 @@ robot:
 rl:
   observation:
     vec:
-      num: 22
+      num: 20
       base_position: True
       base_heading: True
       camera_position: False
