@@ -9,20 +9,20 @@ misc:
 
 player:
   game_logs: [
-    "../logs",
+    "../logs/starkit_wm",
   ]
 
 ball:
-  recorded: False
+  recorded: True
   gen:
     friction_factor: 0.8
     kick_intensity: 5.0
     kick_prop: 0.005
-    ball_noise: 0.05
+    ball_noise: 0.005
 
 robot:
   height: 0.8
-  recorded: False
+  recorded: True
   gen:
     position:
       walk_speed_factor: 0.3
