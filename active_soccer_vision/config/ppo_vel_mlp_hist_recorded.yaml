@@ -31,7 +31,7 @@ robot:
       stop_prop: 0.01
     orientation:
       turn_speed_factor: 0.5
-      noise: 0.0
+      noise: 0.05
       turn_prop: 0.1
       stop_prop: 0.01
 
@@ -39,31 +39,31 @@ robot:
 rl:
   observation:
     vec:
-      num: 9
+      num: 24
       base_position: True
       base_heading: True
       camera_position: False
       neck_joint_position: True
-      neck_joint_position_history: False
-      sin_phase: True
-      action_history: False
+      neck_joint_position_history: True
+      sin_phase: False
+      action_history: True
       estimated_ball_state: True
-      estimated_robot_states: False
+      estimated_robot_states: True
     maps:
       observation_maps: False
       resolution: 10
-      estimated_robot_states_map: True
+      estimated_robot_states_map: False
       view_history_map: True
       view_history_map_decay: 0.99
   action:
-    mode: "Absolute"  # Pattern, Velocity, Position, Absolute
+    space: "continuos" # continuos, discrete
+    mode: "Velocity"  # Pattern, Velocity, Position, Absolute
   reward:
-    base: 0 #1
+    base: 0
     ball_visibility: 1
-    robot_visibility: 0
-    sin_demonstration_mse: 0 #-0.1
+    robot_visibility: 1
+    sin_demonstration_mse: 0
     ball_confidence: 0
     robot_confidence: 0
     field_coverage_mean: 0
     field_coverage_std: 0
-

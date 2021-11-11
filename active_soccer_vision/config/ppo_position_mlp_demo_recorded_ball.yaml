@@ -39,7 +39,7 @@ robot:
 rl:
   observation:
     vec:
-      num: 9
+      num: 10
       base_position: True
       base_heading: True
       camera_position: False
@@ -52,18 +52,18 @@ rl:
     maps:
       observation_maps: False
       resolution: 10
-      estimated_robot_states_map: True
+      estimated_robot_states_map: False
       view_history_map: True
       view_history_map_decay: 0.99
   action:
-    mode: "Absolute"  # Pattern, Velocity, Position, Absolute
+    space: "continuos" # continuos, discrete
+    mode: "Position"  # Pattern, Velocity, Position, Absolute
   reward:
-    base: 0 #1
+    base: 0.5
     ball_visibility: 1
     robot_visibility: 0
-    sin_demonstration_mse: 0 #-0.1
+    sin_demonstration_mse: -0.5
     ball_confidence: 0
     robot_confidence: 0
     field_coverage_mean: 0
     field_coverage_std: 0
-
