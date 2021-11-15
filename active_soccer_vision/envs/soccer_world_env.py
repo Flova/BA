@@ -28,15 +28,15 @@ class SoccerWorldEnv(gym.Env):
         if self.config['rl']['action']['space'] == "discrete":
             self.action_space = spaces.Discrete(5)
         elif self.config['rl']['action']['space'] == "continuos":
-            self.action_space = spaces.Box(np.array([-1,-1]), np.array([1,1]), dtype=float)
+            self.action_space = spaces.Box(np.array([-1,-1], dtype=float), np.array([1,1], dtype=float), dtype=float)
         else:
             print("Unknown action space!")
 
         if not self.config['rl']['observation']['maps']['observation_maps']:
-            self.observation_space = spaces.Box(0, 1, (self.config['rl']['observation']['vec']['num'],), dtype=float)
+            self.observation_space = spaces.Box(0.0, 1.0, (self.config['rl']['observation']['vec']['num'],), dtype=float)
         else:
             self.observation_space = spaces.Dict({
-                "vec": spaces.Box(0, 1, (self.config['rl']['observation']['vec']['num'],), dtype=float),
+                "vec": spaces.Box(0.0, 1.0, (self.config['rl']['observation']['vec']['num'],), dtype=float),
                 "map": spaces.Box(low=0, high=255, shape=(2,
                     self.config['sim']['field_size'][1] * self.config['rl']['observation']['maps']['resolution'],
                     self.config['sim']['field_size'][0] * self.config['rl']['observation']['maps']['resolution']), dtype=np.uint8)
@@ -120,7 +120,7 @@ class SoccerWorldEnv(gym.Env):
         if self.counter != 0:
             viz = self.sim.render()
 
-            time.sleep(self.sim.time_delta)
+            #time.sleep(self.sim.time_delta)
 
             if mode == "human":
                 # Show the image
