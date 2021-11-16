@@ -3,6 +3,7 @@ sim:
   time_delta: 0.1
   render_resolution: 80
   length: 4000
+  map: "assets/lines.png"
 
 misc:
   num_robots: 4
@@ -56,11 +57,12 @@ rl:
       view_history_map: True
       view_history_map_decay: 0.99
   action:
-    mode: "Absolute"  # Pattern, Velocity, Position, Absolute
+    space: "continuos" # continuos, discrete
+    mode: "Position"  # Pattern, Velocity, Position, Absolute
   reward:
     base: 0 #1
     ball_visibility: 1
-    robot_visibility: 0
+    robot_visibility: 1
     sin_demonstration_mse: 0 #-0.1
     ball_confidence: 0
     robot_confidence: 0

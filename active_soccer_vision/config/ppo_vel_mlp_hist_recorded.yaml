@@ -3,6 +3,7 @@ sim:
   time_delta: 0.1
   render_resolution: 80
   length: 4000
+  map: "assets/lines.png"
 
 misc:
   num_robots: 4

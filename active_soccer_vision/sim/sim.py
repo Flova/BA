@@ -1,3 +1,4 @@
+import os
 import time
 import math
 import transforms3d
@@ -11,6 +12,10 @@ from webots_web_log_interface.interface import WebotsGameLogParser
 from active_soccer_vision.sim.ball import ball_position_gen, ball_position_player, Ball
 from active_soccer_vision.sim.robot import robot_position_gen, robot_position_player, robot_orientation_gen, robot_orientation_player, Robot
 from active_soccer_vision.sim.camera import Camera
+
+# Get file location
+__location__ = os.path.realpath(
+    os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 class SoccerWorldSim:
 
@@ -30,6 +35,12 @@ class SoccerWorldSim:
 
         self.game_log_paths = self.config['player']['game_logs']
         random.shuffle(self.game_log_paths)
+
+        # Load render background
+        img = cv2.imread(os.path.join(__location__, "..", self.config['sim']['map']))
+        self.field_map = cv2.resize(
+            img,
+            (self.render_resolution * self.field_size[0], self.render_resolution * self.field_size[1]))
 
         # Load the game log if needed
         if self.load_recordings:
@@ -295,9 +306,12 @@ class SoccerWorldSim:
             }
 
     def render(self):
-        # Create canvas
-        canvas = np.zeros((self.render_resolution * self.field_size[1], self.render_resolution * self.field_size[0], 3), dtype=np.uint8)
+        # Options
+        render_ball_grid = False
+        mask_out = True
 
+        # Create canvas
+        canvas = self.field_map.copy()
         # Draw camera wit fov indicator
         yaw = self.camera.get_heading()
         camera_on_canvas = (self.camera.get_2d_position() * self.render_resolution).astype(np.int)
@@ -317,8 +331,8 @@ class SoccerWorldSim:
             else:
                 color = (100, 100, 255)
             if robot == self.my_robot:
-                color = (255, 100, 100)
-            cv2.arrowedLine(canvas, tuple(robot_on_canvas), tuple(robot_in_image_heading_vector), color, 2)
+                color = (255, 255, 255)
+            cv2.arrowedLine(canvas, tuple(robot_on_canvas), tuple(robot_in_image_heading_vector), color, 4)
 
         # Draw other robots
         [draw_robot(robot) for robot in self.robots]
@@ -327,7 +341,6 @@ class SoccerWorldSim:
         corners = (self.camera.get_projected_image_corners() * self.render_resolution).astype(np.int32)
         cv2.polylines(canvas,[corners.reshape((-1,1,2))],True,(0,255,255), 5)
 
-        render_ball_grid = False
         if render_ball_grid:
             # Simulate and check ball grid for testing purses
             for i in [x / 5.0 for x in range(0, 50)]:
@@ -343,5 +356,9 @@ class SoccerWorldSim:
             cv2.circle(canvas, tuple([int(e * self.render_resolution) for e in self.ball.get_2d_position()]), 10, (0,255,0), -1)
         else:
             cv2.circle(canvas, tuple([int(e * self.render_resolution) for e in self.ball.get_2d_position()]), 10, (0,0,255), -1)
+
+        # Mask out invisible areas
+        if mask_out:
+            canvas *= cv2.fillPoly(np.zeros_like(canvas),[corners.reshape((-1,1,2))], color=(1,1,1))
 
         return canvas
