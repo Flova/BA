@@ -308,7 +308,7 @@ class SoccerWorldSim:
     def render(self):
         # Options
         render_ball_grid = False
-        mask_out = True
+        mask_out = False
 
         # Create canvas
         canvas = self.field_map.copy()
