@@ -2,7 +2,7 @@ sim:
   field_size: [9, 6]
   time_delta: 0.1
   render_resolution: 80
-  length: 4000
+  length: 12000
   map: "assets/lines.png"
 
 misc:
