@@ -11,6 +11,7 @@ misc:
 player:
   game_logs: [
     "../logs/starkit_wm",
+    "../logs/rfc_wm",
   ]
 
 ball:
@@ -40,7 +41,7 @@ robot:
 rl:
   observation:
     vec:
-      num: 9
+      num: 10
       base_position: True
       base_heading: True
       camera_position: False

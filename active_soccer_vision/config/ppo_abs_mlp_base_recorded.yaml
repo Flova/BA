@@ -11,6 +11,7 @@ misc:
 player:
   game_logs: [
     "../logs/starkit_wm",
+    "../logs/rfc_wm",
   ]
 
 ball:
