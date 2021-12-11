@@ -28,7 +28,9 @@ class SoccerWorldEnv(gym.Env):
         if self.config['rl']['action']['space'] == "discrete":
             self.action_space = spaces.Discrete(5)
         elif self.config['rl']['action']['space'] == "continuos":
-            self.action_space = spaces.Box(np.array([-1,-1], dtype=float), np.array([1,1], dtype=float), dtype=float)
+            self.action_space = spaces.Box(
+                np.array([-1] * self.config['rl']['action']['num'], dtype=float),
+                np.array([1]  * self.config['rl']['action']['num'], dtype=float), dtype=float)
         else:
             print("Unknown action space!")
 

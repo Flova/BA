@@ -58,6 +58,7 @@ rl:
       view_history_map: True
       view_history_map_decay: 0.99
   action:
+    num: 2
     space: "continuos" # continuos, discrete
     mode: "Position"  # Pattern, Velocity, Position, Absolute
   reward:

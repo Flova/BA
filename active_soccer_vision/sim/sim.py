@@ -171,7 +171,11 @@ class SoccerWorldSim:
                     max(0,
                         (math.sin(self._sim_step * math.pi * 0.5 * self.time_delta) + 1) * 0.5 * action[0] + (action[1] - 0.5))),
                 normalized=True)
-            self.camera.set_tilt(0.3, normalized=True)
+            self.camera.set_tilt(
+                min(1,
+                    max(0,
+                        (math.sin(self._sim_step * math.pi * 0.25 * self.time_delta) + 1) * 0.5 * action[2] + (action[3] - 0.5))),
+                normalized=True)
         elif self.config['rl']['action']['mode'] == "Position":
             self.camera.set_pan(action[0], normalized=True)
             self.camera.set_tilt(action[1], normalized=True)
