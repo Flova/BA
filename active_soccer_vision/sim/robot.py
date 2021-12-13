@@ -185,8 +185,8 @@ class Robot:
         self.height = height
 
     def step(self):
-        self.orientation, _ = self.orientation_generator.__next__()
-        self.position, _ = self.position_generator.__next__()
+        self.orientation, _ = next(self.orientation_generator)
+        self.position, _ = next(self.position_generator)
         self.conf = max(self.conf - 0.1 * self.time_delta, 0.0)
 
     def get_base_footprint(self):
