@@ -44,7 +44,7 @@ class SoccerWorldSim:
 
         # Load the game log if needed
         if self.load_recordings:
-            self.webots_log_loader = WebotsGameLogParser(self.game_log_paths[0], verbose=False)
+            self.webots_log_loader = WebotsGameLogParser(os.path.join(__location__, "..", self.game_log_paths[0]), verbose=False)
             self.webots_log_loader.start = random.randrange(0,
                 int(self.webots_log_loader.get_max_player_timestamp() - self.config['sim']['length'] * self.time_delta))
 
