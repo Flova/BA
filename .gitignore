@@ -133,3 +133,5 @@ zoo
 
 # Game logs
 logs/
+
+.vscode/
