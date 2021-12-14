@@ -68,7 +68,7 @@ class SoccerWorldEnv(gym.Env):
             info['mean_robots_confidence'] = np.array(list(self.robot_confidence_buffer.values())).mean()
             info['std_ball_confidence'] = np.array(list(self.ball_confidence_buffer.values())).std()
             info['std_robots_confidence'] = np.array(list(self.robot_confidence_buffer.values())).std()
-            #print(info)
+            print(info)
 
         return observation, reward, done, info
 
