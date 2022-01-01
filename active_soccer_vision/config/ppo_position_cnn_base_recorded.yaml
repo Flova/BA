@@ -1,0 +1,72 @@
+sim:
+  field_size: [9, 6]
+  time_delta: 0.1
+  render_resolution: 80
+  length: 4000
+  map: "assets/lines.png"
+
+misc:
+  num_robots: 4
+
+player:
+  game_logs: [
+    "../logs/starkit_wm",
+    "../logs/rfc_wm",
+  ]
+
+ball:
+  recorded: True
+  gen:
+    friction_factor: 0.8
+    kick_intensity: 5.0
+    kick_prop: 0.005
+    ball_noise: 0.005
+
+robot:
+  height: 0.7
+  recorded: True
+  gen:
+    position:
+      walk_speed_factor: 0.3
+      noise: 0.02
+      walk_prop: 0.1
+      stop_prop: 0.01
+    orientation:
+      turn_speed_factor: 0.5
+      noise: 0.05
+      turn_prop: 0.1
+      stop_prop: 0.01
+
+
+rl:
+  observation:
+    vec:
+      num: 18
+      base_position: True
+      base_heading: True
+      camera_position: False
+      neck_joint_position: True
+      neck_joint_position_history: False
+      sin_phase: False
+      action_history: False
+      estimated_ball_state: True
+      estimated_robot_states: True
+    maps:
+      observation_maps: False
+      resolution: 10
+      estimated_robot_states_map: False
+      view_history_map: True
+      view_history_map_decay: 0.99
+  action:
+    num: 2
+    space: "continuos" # continuos, discrete
+    mode: "Position"  # Pattern, Velocity, Position, Absolute
+  reward:
+    base: 0
+    ball_visibility: 1
+    robot_visibility: 1
+    sin_demonstration_mse: 0
+    ball_confidence: 0
+    robot_confidence: 0
+    field_coverage_mean: 0
+    field_coverage_std: 0
