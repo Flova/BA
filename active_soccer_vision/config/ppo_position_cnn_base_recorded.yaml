@@ -52,7 +52,7 @@ rl:
       estimated_ball_state: True
       estimated_robot_states: True
     maps:
-      observation_maps: False
+      observation_maps: True
       resolution: 10
       estimated_robot_states_map: False
       view_history_map: True
