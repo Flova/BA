@@ -47,6 +47,7 @@ class SoccerWorldSim:
             self.webots_log_loader = WebotsGameLogParser(os.path.join(__location__, "..", self.game_log_paths[0]), verbose=False)
             self.webots_log_loader.start = random.randrange(0,
                 int(self.webots_log_loader.get_max_player_timestamp() - self.config['sim']['length'] * self.time_delta))
+            self.webots_log_loader.stop = self.webots_log_loader.start + self.config['sim']['length'] * self.time_delta 
 
         # Check if we use the recorded or generated bakk movements
         if self.config['ball']['recorded']:
@@ -54,6 +55,7 @@ class SoccerWorldSim:
                 game_log=self.webots_log_loader,
                 time_delta=self.time_delta,
                 start=self.webots_log_loader.start,
+                stop=self.webots_log_loader.stop,
                 ball_position_interval=(
                     self.field_size[0],
                     self.field_size[1]),
@@ -88,12 +90,14 @@ class SoccerWorldSim:
                 robot_orientation_generator = robot_orientation_player(
                     game_log=self.webots_log_loader,
                     start=self.webots_log_loader.start,
+                    stop=self.webots_log_loader.stop,
                     time_delta=self.time_delta,
                     robot=name,
                     noise=self.config['robot']['gen']['position']['noise'])
                 robot_position_generator = robot_position_player(
                     game_log=self.webots_log_loader,
                     start=self.webots_log_loader.start,
+                    stop=self.webots_log_loader.stop,
                     robot=name,
                     time_delta=self.time_delta,
                     robot_position_interval=(
