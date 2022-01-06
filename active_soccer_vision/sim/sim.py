@@ -46,8 +46,8 @@ class SoccerWorldSim:
         if self.load_recordings:
             self.webots_log_loader = WebotsGameLogParser(os.path.join(__location__, "..", self.game_log_paths[0]), verbose=False)
             self.webots_log_loader.start = random.randrange(0,
-                int(self.webots_log_loader.get_max_player_timestamp() - self.config['sim']['length'] * self.time_delta))
-            self.webots_log_loader.stop = self.webots_log_loader.start + (self.config['sim']['length'] + 1) * self.time_delta 
+                int(self.webots_log_loader.get_max_player_timestamp() - (self.config['sim']['length'] + 1) * self.time_delta))
+            self.webots_log_loader.stop = self.webots_log_loader.start + (self.config['sim']['length'] + 2) * self.time_delta 
 
         # Check if we use the recorded or generated bakk movements
         if self.config['ball']['recorded']:
