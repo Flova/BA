@@ -130,7 +130,7 @@ class robot_orientation_player:
         orientation_with_noise = robot_orientation + np.random.randn(3) * self._noise
         # Step
         self._step += 1
-        return orientation_with_noise , robot_orientation
+        return orientation_with_noise, robot_orientation
 
 
 class robot_orientation_gen(object):
